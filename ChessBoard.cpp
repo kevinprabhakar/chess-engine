@@ -11,6 +11,7 @@ ChessBoard::ChessBoard(){
 
 	generateNotationMap();
 	updateGenPositions();
+	updateBoard();
 
 	
 
@@ -85,7 +86,8 @@ ChessBoard::~ChessBoard(){
 
 }
 
-void ChessBoard::drawBoard(){
+
+void ChessBoard::updateBoard(){
 	for (int i=0;i<64;i++){
 		gameBoard[i]='*';
 	}
@@ -103,6 +105,9 @@ void ChessBoard::drawBoard(){
 		if (BK[i]) gameBoard[i]='k';
 		if (BQ[i]) gameBoard[i]='q';
 	}
+}
+void ChessBoard::drawBoard(){
+	
 	for (int i=63;i>=0;i--){
 		cout<<gameBoard[i];
 		if (i%8==0)cout<<endl;
@@ -118,4 +123,12 @@ void ChessBoard::updateGenPositions(){
 	emptySquares = (~occupiedSquares);
 }
 
+char ChessBoard::getPiece(string square){
+	map<string, int>::iterator it=notationMap.find(square);
+	return gameBoard[it->second];
+}
 
+// int main(){
+// 	ChessBoard board1;
+// 	cout<<board1.getPiece("h1")<<endl;
+// }

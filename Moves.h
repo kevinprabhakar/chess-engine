@@ -29,7 +29,7 @@ class Moves{
 		Moves();
 		~Moves();
 		string possibleMoves();
-		string possibleWP(string history);
+		string possibleWP(string lastMove);
 		ChessBoard* boardRep;
 
 
