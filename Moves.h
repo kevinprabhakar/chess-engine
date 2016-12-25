@@ -2,6 +2,8 @@
 #define MOVES_H_
 
 #include <bitset>
+#include <string>
+#include "ChessBoard.h"
 
 using namespace std;
 
@@ -25,6 +27,13 @@ class Moves{
 		bitset<64> fileA;
 	public:
 		Moves();
+		~Moves();
+		string possibleMoves();
+		string possibleWP(string history);
+		ChessBoard* boardRep;
+
+
+
 
 	protected:
 };

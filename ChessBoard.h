@@ -3,7 +3,7 @@
 
 #include <bitset>
 #include <map>
-#include "Moves.h"
+#include <string>
 
 using namespace std;
 
@@ -34,11 +34,12 @@ public:
 
 	char gameBoard[64];
 	map<string, int> notationMap;
+	map<int, string> positionMap;
 
 private:
 	void setBoard();
 	void generateNotationMap();
-	Moves moveSet;
+	void updateGenPositions();
 
 };
 

@@ -6,8 +6,15 @@
 #include <iterator>
 
 ChessBoard::ChessBoard(){
+
 	setBoard();
+
 	generateNotationMap();
+	updateGenPositions();
+
+	
+
+
 }
 
 void ChessBoard::setBoard(){
@@ -23,6 +30,9 @@ void ChessBoard::setBoard(){
 	WN.set(6);
 	WR.set(7);
 
+
+
+
 	for (int i=48;i<56;i++){
 		BP.set(i);
 	}
@@ -34,7 +44,14 @@ void ChessBoard::setBoard(){
 	BB.set(61);
 	BN.set(62);
 	BR.set(63);
+
+
+
+
+
+
 }
+
 void ChessBoard::generateNotationMap(){
 
 	string notationFileName="notationMap.txt";
@@ -54,6 +71,7 @@ void ChessBoard::generateNotationMap(){
 		ss >> arrayPos;
 
 		notationMap[AN]=arrayPos;
+		positionMap[arrayPos]=AN;
 	}
 
 	notationFile.close ();
@@ -92,11 +110,12 @@ void ChessBoard::drawBoard(){
 	}
 }
 
-int main(){
-	ChessBoard board1;
-	board1.drawBoard();
+void ChessBoard::updateGenPositions(){
 
-	
-
+	whitePieces = (WP|WR|WN|WB|WK|WQ);
+	blackPieces = (BP|BR|BN|BB|BK|BQ);
+	occupiedSquares = (whitePieces | blackPieces);
+	emptySquares = (~occupiedSquares);
 }
+
 
