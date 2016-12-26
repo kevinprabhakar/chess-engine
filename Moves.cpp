@@ -1,5 +1,6 @@
 #include "Moves.h"
 #include <iostream>
+#include <math.h>
 
 Moves::Moves(){
 	rank1=255U;
@@ -19,7 +20,23 @@ Moves::Moves(){
 	fileB=4629771061636907072U;
 	fileA=9259542123273814144U;
 
-	
+	ranks.push_back(rank1);				//USE floor(ARRAYPOS/8)
+	ranks.push_back(rank2);
+	ranks.push_back(rank3);
+	ranks.push_back(rank4);
+	ranks.push_back(rank5);
+	ranks.push_back(rank6);
+	ranks.push_back(rank7);
+	ranks.push_back(rank8);
+
+	files.push_back(fileH);				//USE (ARRAYPOS%8)
+	files.push_back(fileG);
+	files.push_back(fileF);
+	files.push_back(fileE);
+	files.push_back(fileD);
+	files.push_back(fileC);
+	files.push_back(fileB);
+	files.push_back(fileA);
 
 	boardRep = new ChessBoard();
 }
@@ -148,10 +165,36 @@ string Moves::possibleWP(string lastMove){
 }
 
 
+uint64_t Moves::HandVMoves(int arrayPos){
+	/******************************************
+	Alright so this disgusting looking code works like this
+	Slider bitset marks position of the rook/queen
+	Occupied Squares marks position of occupied squares
+	horizontal = (o-2s) ^ (o'-2s')'    where the ' marks reverse
+	vertical is same thing except you restrict it to specific file
+
+	function returns unsigned 64 bit integer that can be converted to bitset of H&V moves
+	DOES NOT ACCOUNT FOR WHITE OR BLACK, you have to hard code that into the specific pieces
+	*******************************************/
+	bitset<64> slider;
+	slider.set(arrayPos);
+	bitset<64> horizontal=(boardRep->occupiedSquares.to_ulong() - (2*slider.to_ulong()))^(reverseBits(reverseBits(boardRep->occupiedSquares.to_ulong())-(2 * reverseBits(slider.to_ulong()))));
+	bitset<64> vertical = ((boardRep->occupiedSquares & files[arrayPos % 8]).to_ulong() - (2 * slider.to_ulong())) ^ (reverseBits(reverseBits((boardRep->occupiedSquares & files[arrayPos % 8]).to_ulong())-(2*reverseBits(slider.to_ulong()))));
+	return (uint64_t)((horizontal & ranks[floor(arrayPos/8)])|(vertical & files[arrayPos % 8])).to_ulong();
+}
+
 int main(){
 	Moves moveSet;
-	bitset<64> n(6327421892U);
-	cout<<n<<endl;
-	bitset<64> reverser(reverseBits((uint64_t)n.to_ulong()));			//THIS IS THE SYNTAX FOR REVERSING 64 BIT BITSET
-	cout<<reverser<<endl;
+	// bitset<64> n(6327421892U);
+	// cout<<n<<endl;
+	// bitset<64> reverser(reverseBits((uint64_t)n.to_ulong()));			//THIS IS THE SYNTAX FOR REVERSING 64 BIT BITSET
+	// cout<<reverser<<endl;
+	bitset<64> horizontals=moveSet.HandVMoves(35);
+	cout<<endl;
+	for (int i=63;i>=0;i--){
+		cout<<horizontals[i];
+		if (i%8==0)cout<<endl;
+
+	}
+
 }

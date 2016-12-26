@@ -27,12 +27,18 @@ class Moves{
 		bitset<64> fileC;
 		bitset<64> fileB;
 		bitset<64> fileA;
+		vector<bitset<64> > ranks;
+		vector<bitset<64> > files;
+		vector<bitset<64> > diagnols;
+		vector<bitset<64> > adiagnols;
+
 	public:
 		Moves();
 		~Moves();
 		string possibleMoves();
 		string possibleWP(string lastMove);
 		ChessBoard* boardRep;
+		uint64_t HandVMoves(int arrayPos);
 	private:
 
 
