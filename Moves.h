@@ -4,6 +4,8 @@
 #include <bitset>
 #include <string>
 #include "ChessBoard.h"
+#include <vector>
+#include <cstdint>
 
 using namespace std;
 
@@ -31,6 +33,10 @@ class Moves{
 		string possibleMoves();
 		string possibleWP(string lastMove);
 		ChessBoard* boardRep;
+	private:
+
+
+
 
 
 
