@@ -111,7 +111,6 @@ void ChessBoard::drawBoard(){
 	for (int i=63;i>=0;i--){
 		cout<<gameBoard[i];
 		if (i%8==0)cout<<endl;
-
 	}
 }
 
