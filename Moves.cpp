@@ -72,7 +72,7 @@ Moves::Moves(){
 	rank1=255U;
 	rank2=65280U;
 	rank3=16711680U;
-	rank4=4278190080U;
+	rank5=4278190080U;
 	rank5=1095216660480U;
 	rank6=280375465082880U;
 	rank7=71776119061217280U;
@@ -210,6 +210,104 @@ string Moves::possibleWP(string lastMove){
 	return list;
 }
 
+string Moves::possibleBP(string lastMove){
+	/********************************
+	Variable Definition
+	********************************/
+	string startSquare=lastMove.substr(0,2);
+	string destinationSquare=lastMove.substr(3,2);
+
+	string list = "";
+	bitset<64> PAWN_MOVES;
+
+	/*******************************
+	EN PASSANT CODE
+	********************************/
+	if ((boardRep->getPiece(destinationSquare)=='P')&&(startSquare[0]=destinationSquare[0])&&(destinationSquare[1]==startSquare[1]+2)){
+		int destinationIndex=boardRep->notationMap[destinationSquare];
+		bitset<64> EPWHITE;
+		EPWHITE.set(destinationIndex);
+		PAWN_MOVES=(boardRep->BP>>7)&~fileA&(EPWHITE>>8)&rank4&boardRep->emptySquares;
+
+		for (int i=0;i<64;i++){
+			if (PAWN_MOVES[i]){
+				list+=boardRep->positionMap[i+7]+"x"+boardRep->positionMap[i]+"ep ";
+			}
+		}
+
+		PAWN_MOVES=(boardRep->BP>>9)&~fileH&(EPWHITE>>8)&rank4&boardRep->emptySquares;
+		for (int i=0;i<64;i++){
+			if (PAWN_MOVES[i]){
+				list+=boardRep->positionMap[i+9]+"x"+boardRep->positionMap[i]+"ep ";
+			}
+		}
+
+	}
+
+	/****************************************
+	ALL OTHER PAWN FUNCTION CODE
+	*****************************************/
+	PAWN_MOVES=(boardRep->BP>>9)&boardRep->whitePieces&~rank1&~fileH;
+	for (int i=0;i<64;i++){
+		if (PAWN_MOVES[i]){
+			list+=boardRep->positionMap[i+9]+"x"+boardRep->positionMap[i]+" ";
+		}
+	}
+
+	PAWN_MOVES=(boardRep->BP>>7)&boardRep->whitePieces&~rank1&~fileA;
+	for (int i=0;i<64;i++){
+		if (PAWN_MOVES[i]){
+			list+=boardRep->positionMap[i+7]+"x"+boardRep->positionMap[i]+" ";
+		}
+	}
+
+	PAWN_MOVES=(boardRep->BP>>8)&boardRep->emptySquares&~rank1;
+	for (int i=0;i<64;i++){
+		if (PAWN_MOVES[i]){
+			list+=boardRep->positionMap[i+8]+"-"+boardRep->positionMap[i]+" ";
+		}
+	}
+
+	PAWN_MOVES=(boardRep->BP>>16)&boardRep->emptySquares&(boardRep->emptySquares>>8)&~rank1&rank5;
+	for (int i=0;i<64;i++){
+		if (PAWN_MOVES[i]){
+			list+=boardRep->positionMap[i+16]+"-"+boardRep->positionMap[i]+" ";
+		}
+	}
+
+	PAWN_MOVES=(boardRep->BP>>7)&boardRep->whitePieces&rank1&~fileA;
+	for (int i=0;i<64;i++){
+		if (PAWN_MOVES[i]){
+			list+=boardRep->positionMap[i+7]+"x"+boardRep->positionMap[i]+"=Q ";
+			list+=boardRep->positionMap[i+7]+"x"+boardRep->positionMap[i]+"=R ";
+			list+=boardRep->positionMap[i+7]+"x"+boardRep->positionMap[i]+"=N ";
+			list+=boardRep->positionMap[i+7]+"x"+boardRep->positionMap[i]+"=B ";
+		}
+	}
+
+	PAWN_MOVES=(boardRep->BP>>9)&boardRep->whitePieces&rank1&~fileH;
+	for (int i=0;i<64;i++){
+		if (PAWN_MOVES[i]){
+			list+=boardRep->positionMap[i+9]+"x"+boardRep->positionMap[i]+"=Q ";
+			list+=boardRep->positionMap[i+9]+"x"+boardRep->positionMap[i]+"=R ";
+			list+=boardRep->positionMap[i+9]+"x"+boardRep->positionMap[i]+"=N ";
+			list+=boardRep->positionMap[i+9]+"x"+boardRep->positionMap[i]+"=B ";
+		}
+	}
+
+	PAWN_MOVES=(boardRep->BP>>8)&boardRep->emptySquares&rank1;
+	for (int i=0;i<64;i++){
+		if (PAWN_MOVES[i]){
+			list+=boardRep->positionMap[i+8]+"-"+boardRep->positionMap[i]+"=Q ";
+			list+=boardRep->positionMap[i+8]+"-"+boardRep->positionMap[i]+"=R ";
+			list+=boardRep->positionMap[i+8]+"-"+boardRep->positionMap[i]+"=N ";
+			list+=boardRep->positionMap[i+8]+"-"+boardRep->positionMap[i]+"=B ";
+		}
+	}
+
+	return list;
+}
+
 string Moves::possibleWR(){
 	string list="";
 	vector<int> rook_positions;
@@ -225,6 +323,41 @@ string Moves::possibleWR(){
 	for (int i=0;i<(int)rook_positions.size();i++){
 		bitset<64> rookMoves(HandVMoves(rook_positions[i]));
 		bitset<64> ROOK_MOVES = rookMoves & (~boardRep->whitePieces);
+		vector<int> rook_destinations;
+
+		for (int j=0;j<64;j++){
+			if (ROOK_MOVES[j]){
+				rook_destinations.push_back(j);
+			}
+		}
+
+		for (int j=0;j<(int)(rook_destinations.size());j++){
+			if (boardRep->gameBoard[rook_destinations[j]]=='*'){
+				list+=boardRep->positionMap[rook_positions[i]]+"-"+boardRep->positionMap[rook_destinations[j]]+" ";
+			}else{
+				list+=boardRep->positionMap[rook_positions[i]]+"x"+boardRep->positionMap[rook_destinations[j]]+" ";
+			}
+		}
+
+	}
+	return list;
+}
+
+string Moves::possibleBR(){
+	string list="";
+	vector<int> rook_positions;
+
+	for (int i=0;i<64;i++){
+		if (boardRep->BR[i]){
+			rook_positions.push_back(i);
+		}
+	}
+	if ((int)rook_positions.size()==0){
+		return list;
+	}
+	for (int i=0;i<(int)rook_positions.size();i++){
+		bitset<64> rookMoves(HandVMoves(rook_positions[i]));
+		bitset<64> ROOK_MOVES = rookMoves & (~boardRep->blackPieces);
 		vector<int> rook_destinations;
 
 		for (int j=0;j<64;j++){
@@ -281,6 +414,42 @@ string Moves::possibleWB(){
 	return list;
 }
 
+string Moves::possibleBB(){
+	string list="";
+	vector<int> bishop_positions;
+
+
+	for (int i=0;i<64;i++){
+		if (boardRep->BB[i]){
+			bishop_positions.push_back(i);
+		}
+	}
+	if ((int)bishop_positions.size()==0){
+		return list;
+	}
+	for (int i=0;i<(int)bishop_positions.size();i++){
+		bitset<64> bishopMoves(DandAntiMoves(bishop_positions[i]));
+		bitset<64> BISHOP_MOVES = bishopMoves & (~boardRep->blackPieces);
+		vector<int> bishop_destinations;
+
+		for (int j=0;j<64;j++){
+			if (BISHOP_MOVES[j]){
+				bishop_destinations.push_back(j);
+			}
+		}
+
+		for (int j=0;j<(int)(bishop_destinations.size());j++){
+			if (boardRep->gameBoard[bishop_destinations[j]]=='*'){
+				list+=boardRep->positionMap[bishop_positions[i]]+"-"+boardRep->positionMap[bishop_destinations[j]]+" ";
+			}else{
+				list+=boardRep->positionMap[bishop_positions[i]]+"x"+boardRep->positionMap[bishop_destinations[j]]+" ";
+			}
+		}
+
+	}
+	return list;
+}
+
 string Moves::possibleWQ(){
 	string list="";
 	vector<int> queen_positions;
@@ -299,6 +468,43 @@ string Moves::possibleWQ(){
 		bitset<64> lineAttacks(HandVMoves(queen_positions[i]));
 		bitset<64> queenMoves=diagnolAttacks|lineAttacks;
 		bitset<64> QUEEN_MOVES = queenMoves & (~boardRep->whitePieces);
+		vector<int> queen_destinations;
+
+		for (int j=0;j<64;j++){
+			if (QUEEN_MOVES[j]){
+				queen_destinations.push_back(j);
+			}
+		}
+
+		for (int j=0;j<(int)(queen_destinations.size());j++){
+			if (boardRep->gameBoard[queen_destinations[j]]=='*'){
+				list+=boardRep->positionMap[queen_positions[i]]+"-"+boardRep->positionMap[queen_destinations[j]]+" ";
+			}else{
+				list+=boardRep->positionMap[queen_positions[i]]+"x"+boardRep->positionMap[queen_destinations[j]]+" ";
+			}
+		}
+
+	}
+	return list;
+}
+
+string Moves::possibleBQ(){
+	string list="";
+	vector<int> queen_positions;
+
+	for (int i=0;i<64;i++){
+		if (boardRep->BQ[i]){
+			queen_positions.push_back(i);
+		}
+	}
+	if ((int)queen_positions.size()==0){
+		return list;
+	}
+	for (int i=0;i<(int)queen_positions.size();i++){
+		bitset<64> diagnolAttacks(DandAntiMoves(queen_positions[i]));
+		bitset<64> lineAttacks(HandVMoves(queen_positions[i]));
+		bitset<64> queenMoves=diagnolAttacks|lineAttacks;
+		bitset<64> QUEEN_MOVES = queenMoves & (~boardRep->blackPieces);
 		vector<int> queen_destinations;
 
 		for (int j=0;j<64;j++){
@@ -374,6 +580,60 @@ string Moves::possibleWN(){
 	return list;
 }
 
+string Moves::possibleBN(){
+	string list="";
+	vector<int> knight_positions;
+	
+
+	for (int i=0;i<64;i++){
+		if (boardRep->BN[i]){
+			knight_positions.push_back(i);
+		}
+	}
+
+	if ((int)knight_positions.size()==0){
+		return list;
+	}
+
+
+	for (int i=0;i<(int)knight_positions.size();i++){
+		bitset<64> knight_loc;
+		knight_loc.set(knight_positions[i]);
+		vector<int> knight_destinations;
+
+		bitset<64> spot_1 = (knight_loc & ~fileA & ~fileB) >> 6;
+		bitset<64> spot_2 = (knight_loc & ~fileA) >> 15;
+		bitset<64> spot_3 = (knight_loc & ~fileH) >> 17;
+		bitset<64> spot_4 = (knight_loc & ~fileH & ~fileG) >> 10;
+
+		bitset<64> spot_5 = (knight_loc & ~fileH & ~fileG) << 6;
+		bitset<64> spot_6 = (knight_loc & ~fileH) << 15;
+		bitset<64> spot_7 = (knight_loc & ~fileA) << 17;
+		bitset<64> spot_8 = (knight_loc & ~fileA & ~fileB) << 10;
+
+		bitset<64> KNIGHT_MOVES = (spot_1 | spot_2 | spot_3 | spot_4 | spot_5 | spot_6 |spot_7 | spot_8)&(~boardRep->blackPieces);
+
+		for (int j=0;j<64;j++){
+			if (KNIGHT_MOVES[j]){
+				knight_destinations.push_back(j);
+			}
+		}
+
+
+
+		for (int j=0;j<(int)(knight_destinations.size());j++){
+			if (boardRep->gameBoard[knight_destinations[j]]=='*'){
+				list+=boardRep->positionMap[knight_positions[i]]+"-"+boardRep->positionMap[knight_destinations[j]]+" ";
+			}else{
+				list+=boardRep->positionMap[knight_positions[i]]+"x"+boardRep->positionMap[knight_destinations[j]]+" ";
+			}
+		}
+
+
+	}
+
+	return list;
+}
 
 uint64_t Moves::HandVMoves(int arrayPos){
 	/******************************************
@@ -413,13 +673,22 @@ uint64_t Moves::DandAntiMoves(int arrayPos){
 
 }
 
-string Moves::possibleMoves(string history){
+string Moves::possibleWMoves(string history){
 	string list;
 	list+=possibleWP(history)+possibleWQ()+possibleWB()+possibleWR()+possibleWN();
 
 	return list;
 
 }
+
+string Moves::possibleBMoves(string history){
+	string list;
+	list+=possibleBP(history)+possibleBQ()+possibleBB()+possibleBR()+possibleBN();
+
+	return list;
+
+}
+
 
 
 int main(){
@@ -438,7 +707,7 @@ int main(){
 	// cout<<"MSB INDEX: "<<bitScanReverse((uint64_t)boardRep->WK.to_ulong())<<endl;
 	// cout<<"LSB INDEX: "<<bitScanForward((uint64_t)boardRep->WP.to_ulong())<<endl;
 
-	cout<<moveSet.possibleMoves("e2-e4")<<endl;
+	cout<<moveSet.possibleBMoves("e4-e6")<<endl;
 	moveSet.boardRep->drawBoard();
 
 	// bitset<64> temp = ~moveSet.fileA & ~moveSet.fileB;

@@ -38,12 +38,18 @@ class Moves{
 	public:
 		Moves();
 		~Moves();
-		string possibleMoves(string history);
+		string possibleWMoves(string history);
+		string possibleBMoves(string history);
 		string possibleWP(string lastMove);
 		string possibleWR();
 		string possibleWB();
 		string possibleWQ();
 		string possibleWN();
+		string possibleBP(string lastMove);
+		string possibleBR();
+		string possibleBB();
+		string possibleBQ();
+		string possibleBN();
 		ChessBoard* boardRep;
 		uint64_t HandVMoves(int arrayPos);
 		uint64_t DandAntiMoves(int arrayPos);
