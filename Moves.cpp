@@ -72,7 +72,7 @@ Moves::Moves(){
 	rank1=255U;
 	rank2=65280U;
 	rank3=16711680U;
-	rank5=4278190080U;
+	rank4=4278190080U;
 	rank5=1095216660480U;
 	rank6=280375465082880U;
 	rank7=71776119061217280U;
@@ -164,18 +164,20 @@ string Moves::possibleWP(string lastMove){
 	}
 
 	PAWN_MOVES=(boardRep->WP<<8)&boardRep->emptySquares&~rank8;
+
 	for (int i=0;i<64;i++){
 		if (PAWN_MOVES[i]){
 			list+=boardRep->positionMap[i-8]+"-"+boardRep->positionMap[i]+" ";
 		}
 	}
 
-	PAWN_MOVES=(boardRep->WP<<16)&boardRep->emptySquares&(boardRep->emptySquares<<8)&~rank8&rank4;
+	PAWN_MOVES=(boardRep->WP<<16)&boardRep->emptySquares&(boardRep->emptySquares<<8)&rank4;
 	for (int i=0;i<64;i++){
 		if (PAWN_MOVES[i]){
 			list+=boardRep->positionMap[i-16]+"-"+boardRep->positionMap[i]+" ";
 		}
 	}
+
 
 	PAWN_MOVES=(boardRep->WP<<7)&boardRep->blackPieces&rank8&~fileA;
 	for (int i=0;i<64;i++){
@@ -269,6 +271,7 @@ string Moves::possibleBP(string lastMove){
 	}
 
 	PAWN_MOVES=(boardRep->BP>>16)&boardRep->emptySquares&(boardRep->emptySquares>>8)&~rank1&rank5;
+
 	for (int i=0;i<64;i++){
 		if (PAWN_MOVES[i]){
 			list+=boardRep->positionMap[i+16]+"-"+boardRep->positionMap[i]+" ";
@@ -675,7 +678,7 @@ uint64_t Moves::DandAntiMoves(int arrayPos){
 
 string Moves::possibleWMoves(string history){
 	string list;
-	list+=possibleWP(history)+possibleWQ()+possibleWB()+possibleWR()+possibleWN();
+	list+=possibleWP(history)+possibleWQ()+possibleWB()+possibleWR()+possibleWN()+possibleWK();
 
 	return list;
 
@@ -683,12 +686,234 @@ string Moves::possibleWMoves(string history){
 
 string Moves::possibleBMoves(string history){
 	string list;
-	list+=possibleBP(history)+possibleBQ()+possibleBB()+possibleBR()+possibleBN();
+	list+=possibleBP(history)+possibleBQ()+possibleBB()+possibleBR()+possibleBN()+possibleBK();
 
 	return list;
 
 }
 
+
+
+string Moves::possibleWK(){
+	bitset<64> KING_MOVES;
+	bitset<64> unsafe(~unsafeForWhite());
+	vector<int> king_destinations;
+	string list;
+	int kingLocation = bitScanForward((uint64_t)boardRep->WK.to_ulong());
+
+	KING_MOVES |= (boardRep->WK << 1) & ~fileH & ~boardRep->whitePieces & unsafe;
+	KING_MOVES |= (boardRep->WK >> 1) & ~fileA & ~boardRep->whitePieces & unsafe;
+	KING_MOVES |= (boardRep->WK >> 8) & ~boardRep->whitePieces & unsafe;
+	KING_MOVES |= (boardRep->WK << 8) & ~boardRep->whitePieces & unsafe;
+	KING_MOVES |= (boardRep->WK << 7) & ~fileA & ~boardRep->whitePieces & unsafe;
+	KING_MOVES |= (boardRep->WK << 9) & ~fileH & ~boardRep->whitePieces & unsafe;
+	KING_MOVES |= (boardRep->WK >> 7) & ~fileH & ~boardRep->whitePieces & unsafe;
+	KING_MOVES |= (boardRep->WK >> 9) & ~fileA & ~boardRep->whitePieces & unsafe;
+
+	for (int i=0;i<64;i++){
+		if (KING_MOVES[i]) king_destinations.push_back(i);
+	}
+	for (int j=0;j<(int)(king_destinations.size());j++){
+		if (boardRep->gameBoard[king_destinations[j]]=='*'){
+			list+=boardRep->positionMap[kingLocation]+"-"+boardRep->positionMap[king_destinations[j]]+" ";
+		}else{
+			list+=boardRep->positionMap[kingLocation]+"x"+boardRep->positionMap[king_destinations[j]]+" ";
+		}
+	}
+	/********************************************************
+
+
+	INSERT CODE FOR CASTLING HERE
+
+
+	*********************************************************/
+
+
+	return list;
+}
+
+string Moves::possibleBK(){
+	bitset<64> KING_MOVES;
+	bitset<64> unsafe(~unsafeForBlack());
+	vector<int> king_destinations;
+	string list;
+	int kingLocation = bitScanForward((uint64_t)boardRep->BK.to_ulong());
+
+	KING_MOVES |= (boardRep->BK << 1) & ~fileH & ~boardRep->blackPieces & unsafe;
+	KING_MOVES |= (boardRep->BK >> 1) & ~fileA & ~boardRep->blackPieces & unsafe;
+	KING_MOVES |= (boardRep->BK >> 8) & ~boardRep->blackPieces & unsafe;
+	KING_MOVES |= (boardRep->BK << 8) & ~boardRep->blackPieces & unsafe;
+	KING_MOVES |= (boardRep->BK << 7) & ~fileA & ~boardRep->blackPieces & unsafe;
+	KING_MOVES |= (boardRep->BK << 9) & ~fileH & ~boardRep->blackPieces & unsafe;
+	KING_MOVES |= (boardRep->BK >> 7) & ~fileH & ~boardRep->blackPieces & unsafe;
+	KING_MOVES |= (boardRep->BK >> 9) & ~fileA & ~boardRep->blackPieces & unsafe;
+
+	for (int i=0;i<64;i++){
+		if (KING_MOVES[i]) king_destinations.push_back(i);
+	}
+	for (int j=0;j<(int)(king_destinations.size());j++){
+		if (boardRep->gameBoard[king_destinations[j]]=='*'){
+			list+=boardRep->positionMap[kingLocation]+"-"+boardRep->positionMap[king_destinations[j]]+" ";
+		}else{
+			list+=boardRep->positionMap[kingLocation]+"x"+boardRep->positionMap[king_destinations[j]]+" ";
+		}
+	}
+	/********************************************************
+
+
+	INSERT CODE FOR CASTLING HERE
+
+
+	*********************************************************/
+
+
+
+
+
+
+
+
+	return list;
+}
+
+uint64_t Moves::unsafeForBlack(){
+	bitset<64> unsafeForBlack;
+	bitset<64> KNIGHT_MOVES;
+	bitset<64> BISHOP_MOVES;
+	bitset<64> ROOK_MOVES;
+	bitset<64> QUEEN_MOVES;
+	bitset<64> WK_MOVES;
+	vector<int> knightPositions;
+	vector<int> bishopPositions;
+	vector<int> queenPositions;
+	vector<int> rookPositions;
+
+	for (int i=0;i<64;i++){
+		if (boardRep->WN[i]) knightPositions.push_back(i);
+		if (boardRep->WB[i]) bishopPositions.push_back(i);
+		if (boardRep->WQ[i]) queenPositions.push_back(i);
+		if (boardRep->WR[i]) rookPositions.push_back(i);
+	}
+	for (int i=0;i<(int)knightPositions.size();i++){
+		bitset<64> knight_loc;
+		knight_loc.set(knightPositions[i]);
+		vector<int> knight_destinations;
+
+		bitset<64> spot_1 = (knight_loc & ~fileA & ~fileB) >> 6;
+		bitset<64> spot_2 = (knight_loc & ~fileA) >> 15;
+		bitset<64> spot_3 = (knight_loc & ~fileH) >> 17;
+		bitset<64> spot_4 = (knight_loc & ~fileH & ~fileG) >> 10;
+
+		bitset<64> spot_5 = (knight_loc & ~fileH & ~fileG) << 6;
+		bitset<64> spot_6 = (knight_loc & ~fileH) << 15;
+		bitset<64> spot_7 = (knight_loc & ~fileA) << 17;
+		bitset<64> spot_8 = (knight_loc & ~fileA & ~fileB) << 10;
+
+		KNIGHT_MOVES |= (spot_1 | spot_2 | spot_3 | spot_4 | spot_5 | spot_6 |spot_7 | spot_8)&(~boardRep->whitePieces);
+	}
+	for (int i=0;i<(int)bishopPositions.size();i++){
+		bitset<64> bishopMoves(DandAntiMoves(bishopPositions[i]));
+		BISHOP_MOVES |= bishopMoves & (~boardRep->whitePieces);
+	}
+	for (int i=0;i<(int)rookPositions.size();i++){
+		bitset<64> rookMoves(HandVMoves(rookPositions[i]));
+		ROOK_MOVES |= rookMoves & (~boardRep->whitePieces);
+	}
+	for (int i=0;i<(int)queenPositions.size();i++){
+		bitset<64> diagnolAttacks(DandAntiMoves(queenPositions[i]));
+		bitset<64> lineAttacks(HandVMoves(queenPositions[i]));
+		bitset<64> queenMoves=diagnolAttacks|lineAttacks;
+		QUEEN_MOVES |= queenMoves & (~boardRep->whitePieces);
+	}
+
+	WK_MOVES |= (boardRep->WK << 1) & ~fileH & ~boardRep->whitePieces;
+	WK_MOVES |= (boardRep->WK >> 1) & ~fileA & ~boardRep->whitePieces;
+	WK_MOVES |= (boardRep->WK >> 8) & ~boardRep->whitePieces;
+	WK_MOVES |= (boardRep->WK << 8) & ~boardRep->whitePieces;
+	WK_MOVES |= (boardRep->WK << 7) & ~fileA & ~boardRep->whitePieces;
+	WK_MOVES |= (boardRep->WK << 9) & ~fileH & ~boardRep->whitePieces;
+	WK_MOVES |= (boardRep->WK >> 7) & ~fileH & ~boardRep->whitePieces;
+	WK_MOVES |= (boardRep->WK >> 9) & ~fileA & ~boardRep->whitePieces;
+
+	unsafeForBlack |= (boardRep->WP<<7)&~fileA;
+	unsafeForBlack |= (boardRep->WP<<9)&~fileH;
+	unsafeForBlack |= KNIGHT_MOVES;
+	unsafeForBlack |= BISHOP_MOVES;
+	unsafeForBlack |= ROOK_MOVES;
+	unsafeForBlack |= QUEEN_MOVES;
+	unsafeForBlack |= WK_MOVES;
+
+	return (uint64_t) unsafeForBlack.to_ulong();
+}
+
+uint64_t Moves::unsafeForWhite(){
+	bitset<64> unsafeForWhite;
+	bitset<64> KNIGHT_MOVES;
+	bitset<64> BISHOP_MOVES;
+	bitset<64> ROOK_MOVES;
+	bitset<64> QUEEN_MOVES;
+	bitset<64> BK_MOVES;
+	vector<int> knightPositions;
+	vector<int> bishopPositions;
+	vector<int> queenPositions;
+	vector<int> rookPositions;
+
+	for (int i=0;i<64;i++){
+		if (boardRep->BN[i]) knightPositions.push_back(i);
+		if (boardRep->BB[i]) bishopPositions.push_back(i);
+		if (boardRep->BQ[i]) queenPositions.push_back(i);
+		if (boardRep->BR[i]) rookPositions.push_back(i);
+	}
+	for (int i=0;i<(int)knightPositions.size();i++){
+		bitset<64> knight_loc;
+		knight_loc.set(knightPositions[i]);
+		vector<int> knight_destinations;
+
+		bitset<64> spot_1 = (knight_loc & ~fileA & ~fileB) >> 6;
+		bitset<64> spot_2 = (knight_loc & ~fileA) >> 15;
+		bitset<64> spot_3 = (knight_loc & ~fileH) >> 17;
+		bitset<64> spot_4 = (knight_loc & ~fileH & ~fileG) >> 10;
+
+		bitset<64> spot_5 = (knight_loc & ~fileH & ~fileG) << 6;
+		bitset<64> spot_6 = (knight_loc & ~fileH) << 15;
+		bitset<64> spot_7 = (knight_loc & ~fileA) << 17;
+		bitset<64> spot_8 = (knight_loc & ~fileA & ~fileB) << 10;
+
+		KNIGHT_MOVES |= (spot_1 | spot_2 | spot_3 | spot_4 | spot_5 | spot_6 |spot_7 | spot_8)&(~boardRep->blackPieces);
+	}
+	for (int i=0;i<(int)bishopPositions.size();i++){
+		bitset<64> bishopMoves(DandAntiMoves(bishopPositions[i]));
+		BISHOP_MOVES |= bishopMoves & (~boardRep->blackPieces);
+	}
+	for (int i=0;i<(int)rookPositions.size();i++){
+		bitset<64> rookMoves(HandVMoves(rookPositions[i]));
+		ROOK_MOVES |= rookMoves & (~boardRep->blackPieces);
+	}
+	for (int i=0;i<(int)queenPositions.size();i++){
+		bitset<64> diagnolAttacks(DandAntiMoves(queenPositions[i]));
+		bitset<64> lineAttacks(HandVMoves(queenPositions[i]));
+		bitset<64> queenMoves=diagnolAttacks|lineAttacks;
+		QUEEN_MOVES |= queenMoves & (~boardRep->blackPieces);
+	}
+	BK_MOVES |= (boardRep->BK << 1) & ~fileH & ~boardRep->blackPieces;
+	BK_MOVES |= (boardRep->BK >> 1) & ~fileA & ~boardRep->blackPieces;
+	BK_MOVES |= (boardRep->BK >> 8) & ~boardRep->blackPieces;
+	BK_MOVES |= (boardRep->BK << 8) & ~boardRep->blackPieces;
+	BK_MOVES |= (boardRep->BK << 7) & ~fileA & ~boardRep->blackPieces;
+	BK_MOVES |= (boardRep->BK << 9) & ~fileH & ~boardRep->blackPieces;
+	BK_MOVES |= (boardRep->BK >> 7) & ~fileH & ~boardRep->blackPieces;
+	BK_MOVES |= (boardRep->BK >> 9) & ~fileA & ~boardRep->blackPieces;
+
+	unsafeForWhite |= (boardRep->BP>>7)&~fileH;
+	unsafeForWhite |= (boardRep->BP>>9)&~fileA;
+	unsafeForWhite |= KNIGHT_MOVES;
+	unsafeForWhite |= BISHOP_MOVES;
+	unsafeForWhite |= ROOK_MOVES;
+	unsafeForWhite |= QUEEN_MOVES;
+	unsafeForWhite |= BK_MOVES;
+
+	return (uint64_t) unsafeForWhite.to_ulong();
+}
 
 
 int main(){
@@ -707,8 +932,15 @@ int main(){
 	// cout<<"MSB INDEX: "<<bitScanReverse((uint64_t)boardRep->WK.to_ulong())<<endl;
 	// cout<<"LSB INDEX: "<<bitScanForward((uint64_t)boardRep->WP.to_ulong())<<endl;
 
+	// bitset<64> temp(moveSet.possibleBK());
+
+	// 	for (int i=63;i>=0;i--){
+	// 	cout<<temp[i];
+	// 	if (i%8==0)cout<<endl;
+	// }
+	cout<<moveSet.possibleWMoves("e4-e6")<<endl;
+
 	cout<<moveSet.possibleBMoves("e4-e6")<<endl;
-	moveSet.boardRep->drawBoard();
 
 	// bitset<64> temp = ~moveSet.fileA & ~moveSet.fileB;
 

@@ -45,11 +45,15 @@ class Moves{
 		string possibleWB();
 		string possibleWQ();
 		string possibleWN();
+		string possibleWK();
 		string possibleBP(string lastMove);
 		string possibleBR();
 		string possibleBB();
 		string possibleBQ();
 		string possibleBN();
+		string possibleBK();
+		uint64_t unsafeForWhite();
+		uint64_t unsafeForBlack();
 		ChessBoard* boardRep;
 		uint64_t HandVMoves(int arrayPos);
 		uint64_t DandAntiMoves(int arrayPos);
