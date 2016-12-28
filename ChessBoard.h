@@ -13,6 +13,10 @@ public:
 	void drawBoard();
 	~ChessBoard();
 	char getPiece(string square);
+	void updateBoard();
+	void updateGenPositions();
+
+
 
 public:
 	bitset<64> WK;
@@ -40,8 +44,6 @@ public:
 private:
 	void setBoard();
 	void generateNotationMap();
-	void updateGenPositions();
-	void updateBoard();
 
 };
 

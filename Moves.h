@@ -9,8 +9,9 @@
 
 using namespace std;
 
+
 class Moves{
-	public:
+	private:
 		bitset<64> rank1;
 		bitset<64> rank2;
 		bitset<64> rank3;
@@ -32,14 +33,6 @@ class Moves{
 		vector<bitset<64> > files;
 		static uint64_t diagnols[15];
 		static uint64_t adiagnols[15];
-
-
-
-	public:
-		Moves();
-		~Moves();
-		string possibleWMoves(string history);
-		string possibleBMoves(string history);
 		string possibleWP(string lastMove);
 		string possibleWR();
 		string possibleWB();
@@ -54,9 +47,22 @@ class Moves{
 		string possibleBK();
 		uint64_t unsafeForWhite();
 		uint64_t unsafeForBlack();
-		ChessBoard* boardRep;
 		uint64_t HandVMoves(int arrayPos);
 		uint64_t DandAntiMoves(int arrayPos);
+
+
+
+	public:
+		Moves();
+		~Moves();
+		vector<string> possibleWMoves(string history);
+		vector<string> possibleBMoves(string history);
+		bool WKCheck();
+		bool BKCheck();
+		void makeMove(string move);
+		ChessBoard* boardRep;
+
+		
 	private:
 
 

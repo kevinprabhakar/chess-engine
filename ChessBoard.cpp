@@ -112,6 +112,7 @@ void ChessBoard::drawBoard(){
 		cout<<gameBoard[i];
 		if (i%8==0)cout<<endl;
 	}
+	cout<<endl;
 }
 
 void ChessBoard::updateGenPositions(){

@@ -2,6 +2,7 @@
 #include <iostream>
 #include <math.h>
 #include <cassert>
+#include <sstream>
 
 //index64 used in bitScan Reverse to find MSB
 const int index64[64] = {
@@ -281,30 +282,30 @@ string Moves::possibleBP(string lastMove){
 	PAWN_MOVES=(boardRep->BP>>7)&boardRep->whitePieces&rank1&~fileA;
 	for (int i=0;i<64;i++){
 		if (PAWN_MOVES[i]){
-			list+=boardRep->positionMap[i+7]+"x"+boardRep->positionMap[i]+"=Q ";
-			list+=boardRep->positionMap[i+7]+"x"+boardRep->positionMap[i]+"=R ";
-			list+=boardRep->positionMap[i+7]+"x"+boardRep->positionMap[i]+"=N ";
-			list+=boardRep->positionMap[i+7]+"x"+boardRep->positionMap[i]+"=B ";
+			list+=boardRep->positionMap[i+7]+"x"+boardRep->positionMap[i]+"=q ";
+			list+=boardRep->positionMap[i+7]+"x"+boardRep->positionMap[i]+"=r ";
+			list+=boardRep->positionMap[i+7]+"x"+boardRep->positionMap[i]+"=n ";
+			list+=boardRep->positionMap[i+7]+"x"+boardRep->positionMap[i]+"=b ";
 		}
 	}
 
 	PAWN_MOVES=(boardRep->BP>>9)&boardRep->whitePieces&rank1&~fileH;
 	for (int i=0;i<64;i++){
 		if (PAWN_MOVES[i]){
-			list+=boardRep->positionMap[i+9]+"x"+boardRep->positionMap[i]+"=Q ";
-			list+=boardRep->positionMap[i+9]+"x"+boardRep->positionMap[i]+"=R ";
-			list+=boardRep->positionMap[i+9]+"x"+boardRep->positionMap[i]+"=N ";
-			list+=boardRep->positionMap[i+9]+"x"+boardRep->positionMap[i]+"=B ";
+			list+=boardRep->positionMap[i+9]+"x"+boardRep->positionMap[i]+"=q ";
+			list+=boardRep->positionMap[i+9]+"x"+boardRep->positionMap[i]+"=r ";
+			list+=boardRep->positionMap[i+9]+"x"+boardRep->positionMap[i]+"=n ";
+			list+=boardRep->positionMap[i+9]+"x"+boardRep->positionMap[i]+"=b ";
 		}
 	}
 
 	PAWN_MOVES=(boardRep->BP>>8)&boardRep->emptySquares&rank1;
 	for (int i=0;i<64;i++){
 		if (PAWN_MOVES[i]){
-			list+=boardRep->positionMap[i+8]+"-"+boardRep->positionMap[i]+"=Q ";
-			list+=boardRep->positionMap[i+8]+"-"+boardRep->positionMap[i]+"=R ";
-			list+=boardRep->positionMap[i+8]+"-"+boardRep->positionMap[i]+"=N ";
-			list+=boardRep->positionMap[i+8]+"-"+boardRep->positionMap[i]+"=B ";
+			list+=boardRep->positionMap[i+8]+"-"+boardRep->positionMap[i]+"=q ";
+			list+=boardRep->positionMap[i+8]+"-"+boardRep->positionMap[i]+"=r ";
+			list+=boardRep->positionMap[i+8]+"-"+boardRep->positionMap[i]+"=n ";
+			list+=boardRep->positionMap[i+8]+"-"+boardRep->positionMap[i]+"=b ";
 		}
 	}
 
@@ -676,19 +677,71 @@ uint64_t Moves::DandAntiMoves(int arrayPos){
 
 }
 
-string Moves::possibleWMoves(string history){
+vector<string> Moves::possibleWMoves(string history){
 	string list;
+	string move;
+	vector<string> move_list;
 	list+=possibleWP(history)+possibleWQ()+possibleWB()+possibleWR()+possibleWN()+possibleWK();
 
-	return list;
+	stringstream ss(list);
+
+	while (getline(ss,move,' ')){
+		move_list.push_back(move);
+	}
+
+	for(vector<string>::iterator it2 = move_list.begin(); it2 != move_list.end();){
+		/**************************
+		REMOVES ALL MOVES THAT KILL THE KING
+		**************************/
+		string startSquare=(*it2).substr(0,2);
+		string moveType = (*it2).substr(2,1);
+		string destinationSquare=(*it2).substr(3,2);
+		if(boardRep->getPiece(destinationSquare)=='k')
+	   	{
+			it2 = move_list.erase(it2); 
+	   	}
+	   	else
+	   	{
+			++it2;
+		}
+	}
+
+
+	return move_list;
 
 }
 
-string Moves::possibleBMoves(string history){
+vector<string> Moves::possibleBMoves(string history){
 	string list;
+	string move;
+	vector<string> move_list;
 	list+=possibleBP(history)+possibleBQ()+possibleBB()+possibleBR()+possibleBN()+possibleBK();
 
-	return list;
+	stringstream ss(list);
+
+	while (getline(ss,move,' ')){
+		move_list.push_back(move);
+	}
+
+	for(vector<string>::iterator it2 = move_list.begin(); it2 != move_list.end();){
+		/**************************
+		REMOVES ALL MOVES THAT KILL THE KING
+		**************************/
+		string startSquare=(*it2).substr(0,2);
+		string moveType = (*it2).substr(2,1);
+		string destinationSquare=(*it2).substr(3,2);
+		if(boardRep->getPiece(destinationSquare)=='k')
+	   	{
+			it2 = move_list.erase(it2); 
+	   	}
+	   	else
+	   	{
+			++it2;
+		}
+	}
+
+
+	return move_list;
 
 }
 
@@ -915,6 +968,488 @@ uint64_t Moves::unsafeForWhite(){
 	return (uint64_t) unsafeForWhite.to_ulong();
 }
 
+void Moves::makeMove(string move){
+	string startSquare=move.substr(0,2);
+	string moveType = move.substr(2,1);
+	string destinationSquare=move.substr(3,2);
+	string special;
+	if (move.size()>5){
+		special=move.substr(5,2);
+		cout<<special;
+	}
+
+	int startIndex=boardRep->notationMap[startSquare];
+	int destinationIndex=boardRep->notationMap[destinationSquare];
+
+	if (moveType=="-"){
+		if(boardRep->getPiece(startSquare)=='P')
+		{
+			boardRep->WP.reset(startIndex);
+			if (special=="=Q") boardRep->WQ.set(destinationIndex);
+			else if (special=="=R") boardRep->WR.set(destinationIndex);
+			else if (special=="=B") boardRep->WB.set(destinationIndex);
+			else if (special=="=N") boardRep->WN.set(destinationIndex);
+			else boardRep->WP.set(destinationIndex);
+
+		}
+		if(boardRep->getPiece(startSquare)=='R')
+		{
+			boardRep->WR.reset(startIndex);
+			boardRep->WR.set(destinationIndex);	
+		}
+		if(boardRep->getPiece(startSquare)=='N')
+		{
+			boardRep->WN.reset(startIndex);
+			boardRep->WN.set(destinationIndex);
+		}
+		if(boardRep->getPiece(startSquare)=='B')
+		{
+			boardRep->WB.reset(startIndex);
+			boardRep->WB.set(destinationIndex);
+		}
+		if(boardRep->getPiece(startSquare)=='Q')
+		{
+			boardRep->WQ.reset(startIndex);
+			boardRep->WQ.set(destinationIndex);
+		}
+		if(boardRep->getPiece(startSquare)=='K')
+		{
+			boardRep->WK.reset(startIndex);
+			boardRep->WK.set(destinationIndex);
+		}
+		if(boardRep->getPiece(startSquare)=='p')
+		{
+			boardRep->BP.reset(startIndex);
+			if (special=="=q") boardRep->BQ.set(destinationIndex);
+			else if (special=="=r") boardRep->BR.set(destinationIndex);
+			else if (special=="=b") boardRep->BB.set(destinationIndex);
+			else if (special=="=n") boardRep->BN.set(destinationIndex);
+			else boardRep->BP.set(destinationIndex);
+		}
+		if(boardRep->getPiece(startSquare)=='r')
+		{
+			boardRep->BR.reset(startIndex);
+			boardRep->BR.set(destinationIndex);	
+		}
+		if(boardRep->getPiece(startSquare)=='n')
+		{
+			boardRep->BN.reset(startIndex);
+			boardRep->BN.set(destinationIndex);
+		}
+		if(boardRep->getPiece(startSquare)=='b')
+		{
+			boardRep->BB.reset(startIndex);
+			boardRep->BB.set(destinationIndex);
+		}
+		if(boardRep->getPiece(startSquare)=='q')
+		{
+			boardRep->BQ.reset(startIndex);
+			boardRep->BQ.set(destinationIndex);
+		}
+		if(boardRep->getPiece(startSquare)=='k')
+		{
+			boardRep->BK.reset(startIndex);
+			boardRep->BK.set(destinationIndex);
+		}
+	}
+	if (moveType=="x"){
+		if(boardRep->getPiece(startSquare)=='P')
+		{
+			if (boardRep->getPiece(destinationSquare)=='p'){
+				boardRep->WP.reset(startIndex);
+
+				if (special=="ep"){
+					boardRep->WP.set(destinationIndex);
+					boardRep->BP.reset(destinationIndex-8);
+				}else{
+					boardRep->WP.set(destinationIndex);
+					boardRep->BP.reset(destinationIndex);
+				}
+				
+			}
+			if (boardRep->getPiece(destinationSquare)=='r'){
+				boardRep->WP.reset(startIndex);
+				if (special=="=Q") {boardRep->WQ.set(destinationIndex);boardRep->BR.reset(destinationIndex);}
+				else if (special=="=R") {boardRep->WR.set(destinationIndex);boardRep->BR.reset(destinationIndex);}
+				else if (special=="=B") {boardRep->WB.set(destinationIndex);boardRep->BR.reset(destinationIndex);}
+				else if (special=="=N") {boardRep->WN.set(destinationIndex);boardRep->BR.reset(destinationIndex);}
+				else {boardRep->WP.set(destinationIndex);boardRep->BR.reset(destinationIndex);}
+			}
+			if (boardRep->getPiece(destinationSquare)=='n'){
+				boardRep->WP.reset(startIndex);
+				if (special=="=Q") {boardRep->WQ.set(destinationIndex);boardRep->BN.reset(destinationIndex);}
+				else if (special=="=R") {boardRep->WR.set(destinationIndex);boardRep->BN.reset(destinationIndex);}
+				else if (special=="=B") {boardRep->WB.set(destinationIndex);boardRep->BN.reset(destinationIndex);}
+				else if (special=="=N") {boardRep->WN.set(destinationIndex);boardRep->BN.reset(destinationIndex);}
+				else {boardRep->WP.set(destinationIndex);boardRep->BN.reset(destinationIndex);}
+			}
+			if (boardRep->getPiece(destinationSquare)=='b'){
+				boardRep->WP.reset(startIndex);
+				if (special=="=Q") {boardRep->WQ.set(destinationIndex);boardRep->BB.reset(destinationIndex);}
+				else if (special=="=R") {boardRep->WR.set(destinationIndex);boardRep->BB.reset(destinationIndex);}
+				else if (special=="=B") {boardRep->WB.set(destinationIndex);boardRep->BB.reset(destinationIndex);}
+				else if (special=="=N") {boardRep->WN.set(destinationIndex);boardRep->BB.reset(destinationIndex);}
+				else {boardRep->WP.set(destinationIndex);boardRep->BB.reset(destinationIndex);}
+			}
+			if (boardRep->getPiece(destinationSquare)=='q'){
+				boardRep->WP.reset(startIndex);
+				if (special=="=Q") {boardRep->WQ.set(destinationIndex);boardRep->BQ.reset(destinationIndex);}
+				else if (special=="=R") {boardRep->WR.set(destinationIndex);boardRep->BQ.reset(destinationIndex);}
+				else if (special=="=B") {boardRep->WB.set(destinationIndex);boardRep->BQ.reset(destinationIndex);}
+				else if (special=="=N") {boardRep->WN.set(destinationIndex);boardRep->BQ.reset(destinationIndex);}
+				else {boardRep->WP.set(destinationIndex);boardRep->BQ.reset(destinationIndex);}
+			}
+		}
+		if(boardRep->getPiece(startSquare)=='R')
+		{
+			if (boardRep->getPiece(destinationSquare)=='p'){
+				boardRep->WR.reset(startIndex);
+				boardRep->WR.set(destinationIndex);
+				boardRep->BP.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='r'){
+				boardRep->WR.reset(startIndex);
+				boardRep->WR.set(destinationIndex);
+				boardRep->BR.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='n'){
+				boardRep->WR.reset(startIndex);
+				boardRep->WR.set(destinationIndex);
+				boardRep->BN.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='b'){
+				boardRep->WR.reset(startIndex);
+				boardRep->WR.set(destinationIndex);
+				boardRep->BB.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='q'){
+				boardRep->WR.reset(startIndex);
+				boardRep->WR.set(destinationIndex);
+				boardRep->BQ.reset(destinationIndex);
+			}
+		}
+		if(boardRep->getPiece(startSquare)=='N')
+		{
+			if (boardRep->getPiece(destinationSquare)=='p'){
+				boardRep->WN.reset(startIndex);
+				boardRep->WN.set(destinationIndex);
+				boardRep->BP.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='r'){
+				boardRep->WN.reset(startIndex);
+				boardRep->WN.set(destinationIndex);
+				boardRep->BR.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='n'){
+				boardRep->WN.reset(startIndex);
+				boardRep->WN.set(destinationIndex);
+				boardRep->BN.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='b'){
+				boardRep->WN.reset(startIndex);
+				boardRep->WN.set(destinationIndex);
+				boardRep->BB.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='q'){
+				boardRep->WN.reset(startIndex);
+				boardRep->WN.set(destinationIndex);
+				boardRep->BQ.reset(destinationIndex);
+			}
+		}
+		if(boardRep->getPiece(startSquare)=='B')
+		{
+			if (boardRep->getPiece(destinationSquare)=='p'){
+				boardRep->WB.reset(startIndex);
+				boardRep->WB.set(destinationIndex);
+				boardRep->BP.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='r'){
+				boardRep->WB.reset(startIndex);
+				boardRep->WB.set(destinationIndex);
+				boardRep->BR.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='n'){
+				boardRep->WB.reset(startIndex);
+				boardRep->WB.set(destinationIndex);
+				boardRep->BN.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='b'){
+				boardRep->WB.reset(startIndex);
+				boardRep->WB.set(destinationIndex);
+				boardRep->BB.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='q'){
+				boardRep->WB.reset(startIndex);
+				boardRep->WB.set(destinationIndex);
+				boardRep->BQ.reset(destinationIndex);
+			}
+		}
+		if(boardRep->getPiece(startSquare)=='Q')
+		{
+			if (boardRep->getPiece(destinationSquare)=='p'){
+				boardRep->WQ.reset(startIndex);
+				boardRep->WQ.set(destinationIndex);
+				boardRep->BP.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='r'){
+				boardRep->WQ.reset(startIndex);
+				boardRep->WQ.set(destinationIndex);
+				boardRep->BR.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='n'){
+				boardRep->WQ.reset(startIndex);
+				boardRep->WQ.set(destinationIndex);
+				boardRep->BN.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='b'){
+				boardRep->WQ.reset(startIndex);
+				boardRep->WQ.set(destinationIndex);
+				boardRep->BB.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='q'){
+				boardRep->WQ.reset(startIndex);
+				boardRep->WQ.set(destinationIndex);
+				boardRep->BQ.reset(destinationIndex);
+			}
+		}
+		if(boardRep->getPiece(startSquare)=='K')
+		{
+			if (boardRep->getPiece(destinationSquare)=='p'){
+				boardRep->WK.reset(startIndex);
+				boardRep->WK.set(destinationIndex);
+				boardRep->BP.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='r'){
+				boardRep->WK.reset(startIndex);
+				boardRep->WK.set(destinationIndex);
+				boardRep->BR.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='n'){
+				boardRep->WK.reset(startIndex);
+				boardRep->WK.set(destinationIndex);
+				boardRep->BN.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='b'){
+				boardRep->WK.reset(startIndex);
+				boardRep->WK.set(destinationIndex);
+				boardRep->BB.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='q'){
+				boardRep->WK.reset(startIndex);
+				boardRep->WK.set(destinationIndex);
+				boardRep->BQ.reset(destinationIndex);
+			}
+		}
+		if(boardRep->getPiece(startSquare)=='p')
+		{
+			if (boardRep->getPiece(destinationSquare)=='P'){
+				boardRep->BP.reset(startIndex);
+
+				if (special=="ep"){
+					boardRep->BP.set(destinationIndex);
+					boardRep->WP.reset(destinationIndex+8);
+				}else{
+					boardRep->BP.set(destinationIndex);
+					boardRep->WP.reset(destinationIndex);
+				}
+			}
+			if (boardRep->getPiece(destinationSquare)=='R'){
+				boardRep->BP.reset(startIndex);
+				if (special=="=q") {boardRep->BQ.set(destinationIndex);boardRep->WR.reset(destinationIndex);}
+				else if (special=="=r") {boardRep->BR.set(destinationIndex);boardRep->WR.reset(destinationIndex);}
+				else if (special=="=b") {boardRep->BB.set(destinationIndex);boardRep->WR.reset(destinationIndex);}
+				else if (special=="=n") {boardRep->BN.set(destinationIndex);boardRep->WR.reset(destinationIndex);}
+				else {boardRep->BP.set(destinationIndex);boardRep->WR.reset(destinationIndex);}
+			}
+			if (boardRep->getPiece(destinationSquare)=='N'){
+				boardRep->BP.reset(startIndex);
+				if (special=="=q") {boardRep->BQ.set(destinationIndex);boardRep->WN.reset(destinationIndex);}
+				else if (special=="=r") {boardRep->BR.set(destinationIndex);boardRep->WN.reset(destinationIndex);}
+				else if (special=="=b") {boardRep->BB.set(destinationIndex);boardRep->WN.reset(destinationIndex);}
+				else if (special=="=n") {boardRep->BN.set(destinationIndex);boardRep->WN.reset(destinationIndex);}
+				else {boardRep->BP.set(destinationIndex);boardRep->WN.reset(destinationIndex);}
+			}
+			if (boardRep->getPiece(destinationSquare)=='B'){
+				boardRep->BP.reset(startIndex);
+				if (special=="=q") {boardRep->BQ.set(destinationIndex);boardRep->WB.reset(destinationIndex);}
+				else if (special=="=r") {boardRep->BR.set(destinationIndex);boardRep->WB.reset(destinationIndex);}
+				else if (special=="=b") {boardRep->BB.set(destinationIndex);boardRep->WB.reset(destinationIndex);}
+				else if (special=="=n") {boardRep->BN.set(destinationIndex);boardRep->WB.reset(destinationIndex);}
+				else {boardRep->BP.set(destinationIndex);boardRep->WB.reset(destinationIndex);}
+			}
+			if (boardRep->getPiece(destinationSquare)=='Q'){
+				boardRep->BP.reset(startIndex);
+				if (special=="=q") {boardRep->BQ.set(destinationIndex);boardRep->WQ.reset(destinationIndex);}
+				else if (special=="=r") {boardRep->BR.set(destinationIndex);boardRep->WQ.reset(destinationIndex);}
+				else if (special=="=b") {boardRep->BB.set(destinationIndex);boardRep->WQ.reset(destinationIndex);}
+				else if (special=="=n") {boardRep->BN.set(destinationIndex);boardRep->WQ.reset(destinationIndex);}
+				else {boardRep->BP.set(destinationIndex);boardRep->WQ.reset(destinationIndex);}
+			}
+		}
+		if(boardRep->getPiece(startSquare)=='r')
+		{
+			if (boardRep->getPiece(destinationSquare)=='P'){
+				boardRep->BR.reset(startIndex);
+				boardRep->BR.set(destinationIndex);
+				boardRep->WP.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='R'){
+				boardRep->BR.reset(startIndex);
+				boardRep->BR.set(destinationIndex);
+				boardRep->WR.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='N'){
+				boardRep->BR.reset(startIndex);
+				boardRep->BR.set(destinationIndex);
+				boardRep->WN.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='B'){
+				boardRep->BR.reset(startIndex);
+				boardRep->BR.set(destinationIndex);
+				boardRep->WB.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='Q'){
+				boardRep->BR.reset(startIndex);
+				boardRep->BR.set(destinationIndex);
+				boardRep->WQ.reset(destinationIndex);
+			}
+		}
+		if(boardRep->getPiece(startSquare)=='n')
+		{
+			if (boardRep->getPiece(destinationSquare)=='P'){
+				boardRep->BN.reset(startIndex);
+				boardRep->BN.set(destinationIndex);
+				boardRep->WP.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='R'){
+				boardRep->BN.reset(startIndex);
+				boardRep->BN.set(destinationIndex);
+				boardRep->WR.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='N'){
+				boardRep->BN.reset(startIndex);
+				boardRep->BN.set(destinationIndex);
+				boardRep->WN.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='B'){
+				boardRep->BN.reset(startIndex);
+				boardRep->BN.set(destinationIndex);
+				boardRep->WB.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='Q'){
+				boardRep->BN.reset(startIndex);
+				boardRep->BN.set(destinationIndex);
+				boardRep->WQ.reset(destinationIndex);
+			}
+		}
+		if(boardRep->getPiece(startSquare)=='b')
+		{
+			if (boardRep->getPiece(destinationSquare)=='P'){
+				boardRep->BB.reset(startIndex);
+				boardRep->BB.set(destinationIndex);
+				boardRep->WP.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='R'){
+				boardRep->BB.reset(startIndex);
+				boardRep->BB.set(destinationIndex);
+				boardRep->WR.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='N'){
+				boardRep->BB.reset(startIndex);
+				boardRep->BB.set(destinationIndex);
+				boardRep->WN.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='B'){
+				boardRep->BB.reset(startIndex);
+				boardRep->BB.set(destinationIndex);
+				boardRep->WB.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='Q'){
+				boardRep->BB.reset(startIndex);
+				boardRep->BB.set(destinationIndex);
+				boardRep->WQ.reset(destinationIndex);
+			}
+		}
+		if(boardRep->getPiece(startSquare)=='q')
+		{
+			if (boardRep->getPiece(destinationSquare)=='P'){
+				boardRep->BQ.reset(startIndex);
+				boardRep->BQ.set(destinationIndex);
+				boardRep->WP.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='R'){
+				boardRep->BQ.reset(startIndex);
+				boardRep->BQ.set(destinationIndex);
+				boardRep->WR.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='N'){
+				boardRep->BQ.reset(startIndex);
+				boardRep->BQ.set(destinationIndex);
+				boardRep->WN.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='B'){
+				boardRep->BQ.reset(startIndex);
+				boardRep->BQ.set(destinationIndex);
+				boardRep->WB.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='Q'){
+				boardRep->BQ.reset(startIndex);
+				boardRep->BQ.set(destinationIndex);
+				boardRep->WQ.reset(destinationIndex);
+			}
+		}
+		if(boardRep->getPiece(startSquare)=='k')
+		{
+			if (boardRep->getPiece(destinationSquare)=='P'){
+				boardRep->BK.reset(startIndex);
+				boardRep->BK.set(destinationIndex);
+				boardRep->WP.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='R'){
+				boardRep->BK.reset(startIndex);
+				boardRep->BK.set(destinationIndex);
+				boardRep->WR.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='N'){
+				boardRep->BK.reset(startIndex);
+				boardRep->BK.set(destinationIndex);
+				boardRep->WN.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='B'){
+				boardRep->BK.reset(startIndex);
+				boardRep->BK.set(destinationIndex);
+				boardRep->WB.reset(destinationIndex);
+			}
+			if (boardRep->getPiece(destinationSquare)=='Q'){
+				boardRep->BK.reset(startIndex);
+				boardRep->BK.set(destinationIndex);
+				boardRep->WQ.reset(destinationIndex);
+			}
+		}
+	}
+
+	
+	boardRep->updateBoard();
+	boardRep->updateGenPositions();
+}
+
+bool Moves::WKCheck(){
+	bitset<64> unsafe(unsafeForWhite());
+	bitset<64> check=boardRep->WK & unsafe;
+	if (check.to_ulong()!=0){
+		return true;
+	}
+	return false;
+}
+
+bool Moves::BKCheck(){
+	bitset<64> unsafe(unsafeForBlack());
+	bitset<64> check=boardRep->BK & unsafe;
+	if (check.to_ulong()!=0){
+		return true;
+	}
+	return false;
+}
 
 int main(){
 	Moves moveSet;
@@ -938,9 +1473,26 @@ int main(){
 	// 	cout<<temp[i];
 	// 	if (i%8==0)cout<<endl;
 	// }
-	cout<<moveSet.possibleWMoves("e4-e6")<<endl;
+	vector<string> whiteMoves = moveSet.possibleWMoves("e4-e6");
+	for (int i=0;i<(int)whiteMoves.size();i++){
+		cout<<whiteMoves[i]<<endl;
+	}
 
-	cout<<moveSet.possibleBMoves("e4-e6")<<endl;
+	moveSet.boardRep->drawBoard();
+	moveSet.makeMove("e2-e4");
+	moveSet.boardRep->drawBoard();
+	moveSet.makeMove("h7-h5");
+	moveSet.boardRep->drawBoard();
+	moveSet.makeMove("g1-f3");
+	moveSet.boardRep->drawBoard();
+
+	// if (moveSet.WKCheck()){
+	// 	cout<<"CHECK!"<<endl;
+	// }else{
+	// 	cout<<"NO CHECK!"<<endl;
+	// }
+	// moveSet.makeMove("b1-c3");
+	// moveSet.boardRep->drawBoard();
 
 	// bitset<64> temp = ~moveSet.fileA & ~moveSet.fileB;
 
