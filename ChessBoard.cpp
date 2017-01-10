@@ -50,7 +50,6 @@ void ChessBoard::setBoard(){
 
 
 
-
 }
 
 void ChessBoard::generateNotationMap(){

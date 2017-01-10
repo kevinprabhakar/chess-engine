@@ -20,6 +20,31 @@ uint64_t Moves::diagnols[] = {1U,258U,66052U,16909320U,4328785936U,1108169199648
 uint64_t Moves::adiagnols[] = {128U,32832U,8405024U,2151686160U,550831656968U,141012904183812U,36099303471055874U,9241421688590303745U,4620710844295151872U,2310355422147575808U,1155177711073755136U,577588855528488960U,288794425616760832U,144396663052566528U,72057594037927936U};
 
 
+void Moves::generateNotationMap(){
+
+	string notationFileName="notationMap.txt";
+	ifstream notationFile (notationFileName.c_str());
+
+	string line;
+
+	while (getline(notationFile, line))
+	{
+		stringstream ss;
+		string AN;
+		int arrayPos;
+
+		ss << line;
+
+		ss >> AN;
+		ss >> arrayPos;
+
+		notationMap[AN]=arrayPos;
+		positionMap[arrayPos]=AN;
+	}
+
+	notationFile.close ();
+}
+
 int bitScanForward(uint64_t bb) {
 	/********************************************
 	USED TO FIND Least Significant Bit of bb
@@ -70,6 +95,9 @@ uint64_t reverseBits (uint64_t n)
 
 
 Moves::Moves(){
+
+	generateNotationMap();
+
 	rank1=255U;
 	rank2=65280U;
 	rank3=16711680U;
@@ -105,20 +133,17 @@ Moves::Moves(){
 	files.push_back(fileB);
 	files.push_back(fileA);
 
-	boardRep = new ChessBoard();
 }
 
 Moves::~Moves(){
-	delete boardRep;
 }
 
 
-string Moves::possibleWP(string lastMove){
+string Moves::possibleWP(char* board, bitset<64> WP, bitset<64> whitePieces, bitset<64> blackPieces, bitset<64> occupiedSquares, bitset<64> emptySquares){
 	/********************************
 	Variable Definition
 	********************************/
-	string startSquare=lastMove.substr(0,2);
-	string destinationSquare=lastMove.substr(3,2);
+
 
 	string list = "";
 	bitset<64> PAWN_MOVES;
@@ -126,99 +151,90 @@ string Moves::possibleWP(string lastMove){
 	/*******************************
 	EN PASSANT CODE
 	********************************/
-	if ((boardRep->getPiece(destinationSquare)=='p')&&(startSquare[0]=destinationSquare[0])&&(destinationSquare[1]==startSquare[1]-2)){
-		int destinationIndex=boardRep->notationMap[destinationSquare];
-		bitset<64> EPBlack;
-		EPBlack.set(destinationIndex);
-		PAWN_MOVES=(boardRep->WP<<7)&~fileA&(EPBlack<<8)&rank6&boardRep->emptySquares;
+	// PAWN_MOVES=(WP<<1)&(~fileH)&(EP)&(rank5);
+	// if (PAWN_MOVES.to_ulong()!=0){
+	// 	int index=bitScanForward((uint64_t)EP.to_ulong());
+	// 	list+=positionMap[index-1]+"x"+positionMap[index+8]+"ep ";
+	// }
 
-		for (int i=0;i<64;i++){
-			if (PAWN_MOVES[i]){
-				list+=boardRep->positionMap[i-7]+"x"+boardRep->positionMap[i]+"ep ";
-			}
-		}
-
-		PAWN_MOVES=(boardRep->WP<<9)&~fileH&(EPBlack<<8)&rank6&boardRep->emptySquares;
-		for (int i=0;i<64;i++){
-			if (PAWN_MOVES[i]){
-				list+=boardRep->positionMap[i-9]+"x"+boardRep->positionMap[i]+"ep ";
-			}
-		}
-
-	}
+	// PAWN_MOVES=(WP>>1)&(~fileA)&(EP)&(rank5);
+	// if (PAWN_MOVES.to_ulong()!=0){
+	// 	int index=bitScanForward((uint64_t)EP.to_ulong());
+	// 	list+=positionMap[index+1]+"x"+positionMap[index+8]+"ep ";
+	// }
 
 	/****************************************
 	ALL OTHER PAWN FUNCTION CODE
 	*****************************************/
-	PAWN_MOVES=(boardRep->WP<<9)&boardRep->blackPieces&~rank8&~fileH;
+	PAWN_MOVES=(WP<<9)&blackPieces&~rank8&~fileH;
 	for (int i=0;i<64;i++){
 		if (PAWN_MOVES[i]){
-			list+=boardRep->positionMap[i-9]+"x"+boardRep->positionMap[i]+" ";
+			list+=positionMap[i-9]+"x"+positionMap[i]+" ";
 		}
 	}
 
-	PAWN_MOVES=(boardRep->WP<<7)&boardRep->blackPieces&~rank8&~fileA;
+	PAWN_MOVES=(WP<<7)&blackPieces&~rank8&~fileA;
 	for (int i=0;i<64;i++){
 		if (PAWN_MOVES[i]){
-			list+=boardRep->positionMap[i-7]+"x"+boardRep->positionMap[i]+" ";
+			list+=positionMap[i-7]+"x"+positionMap[i]+" ";
 		}
 	}
 
-	PAWN_MOVES=(boardRep->WP<<8)&boardRep->emptySquares&~rank8;
+	PAWN_MOVES=(WP<<8)&emptySquares&~rank8;
 
 	for (int i=0;i<64;i++){
 		if (PAWN_MOVES[i]){
-			list+=boardRep->positionMap[i-8]+"-"+boardRep->positionMap[i]+" ";
+			list+=positionMap[i-8]+"-"+positionMap[i]+" ";
 		}
 	}
 
-	PAWN_MOVES=(boardRep->WP<<16)&boardRep->emptySquares&(boardRep->emptySquares<<8)&rank4;
+	PAWN_MOVES=(WP<<16)&emptySquares&(emptySquares<<8)&rank4;
 	for (int i=0;i<64;i++){
 		if (PAWN_MOVES[i]){
-			list+=boardRep->positionMap[i-16]+"-"+boardRep->positionMap[i]+" ";
+			list+=positionMap[i-16]+"-"+positionMap[i]+" ";
 		}
 	}
 
 
-	PAWN_MOVES=(boardRep->WP<<7)&boardRep->blackPieces&rank8&~fileA;
+	PAWN_MOVES=(WP<<7)&blackPieces&rank8&~fileA;
 	for (int i=0;i<64;i++){
 		if (PAWN_MOVES[i]){
-			list+=boardRep->positionMap[i-7]+"x"+boardRep->positionMap[i]+"=Q ";
-			list+=boardRep->positionMap[i-7]+"x"+boardRep->positionMap[i]+"=R ";
-			list+=boardRep->positionMap[i-7]+"x"+boardRep->positionMap[i]+"=N ";
-			list+=boardRep->positionMap[i-7]+"x"+boardRep->positionMap[i]+"=B ";
+			list+=positionMap[i-7]+"x"+positionMap[i]+"=Q ";
+			list+=positionMap[i-7]+"x"+positionMap[i]+"=R ";
+			list+=positionMap[i-7]+"x"+positionMap[i]+"=N ";
+			list+=positionMap[i-7]+"x"+positionMap[i]+"=B ";
 		}
 	}
 
-	PAWN_MOVES=(boardRep->WP<<9)&boardRep->blackPieces&rank8&~fileH;
+	PAWN_MOVES=(WP<<9)&blackPieces&rank8&~fileH;
 	for (int i=0;i<64;i++){
 		if (PAWN_MOVES[i]){
-			list+=boardRep->positionMap[i-9]+"x"+boardRep->positionMap[i]+"=Q ";
-			list+=boardRep->positionMap[i-9]+"x"+boardRep->positionMap[i]+"=R ";
-			list+=boardRep->positionMap[i-9]+"x"+boardRep->positionMap[i]+"=N ";
-			list+=boardRep->positionMap[i-9]+"x"+boardRep->positionMap[i]+"=B ";
+			list+=positionMap[i-9]+"x"+positionMap[i]+"=Q ";
+			list+=positionMap[i-9]+"x"+positionMap[i]+"=R ";
+			list+=positionMap[i-9]+"x"+positionMap[i]+"=N ";
+			list+=positionMap[i-9]+"x"+positionMap[i]+"=B ";
 		}
 	}
 
-	PAWN_MOVES=(boardRep->WP<<8)&boardRep->emptySquares&rank8;
+	PAWN_MOVES=(WP<<8)&emptySquares&rank8;
 	for (int i=0;i<64;i++){
 		if (PAWN_MOVES[i]){
-			list+=boardRep->positionMap[i-8]+"-"+boardRep->positionMap[i]+"=Q ";
-			list+=boardRep->positionMap[i-8]+"-"+boardRep->positionMap[i]+"=R ";
-			list+=boardRep->positionMap[i-8]+"-"+boardRep->positionMap[i]+"=N ";
-			list+=boardRep->positionMap[i-8]+"-"+boardRep->positionMap[i]+"=B ";
+			list+=positionMap[i-8]+"-"+positionMap[i]+"=Q ";
+			list+=positionMap[i-8]+"-"+positionMap[i]+"=R ";
+			list+=positionMap[i-8]+"-"+positionMap[i]+"=N ";
+			list+=positionMap[i-8]+"-"+positionMap[i]+"=B ";
 		}
 	}
 
 	return list;
 }
 
-string Moves::possibleBP(string lastMove){
+
+string Moves::possibleBP(char* board, bitset<64> BP, bitset<64> whitePieces, bitset<64> blackPieces, bitset<64> occupiedSquares, bitset<64> emptySquares){
 	/********************************
 	Variable Definition
 	********************************/
-	string startSquare=lastMove.substr(0,2);
-	string destinationSquare=lastMove.substr(3,2);
+	
 
 	string list = "";
 	bitset<64> PAWN_MOVES;
@@ -226,98 +242,89 @@ string Moves::possibleBP(string lastMove){
 	/*******************************
 	EN PASSANT CODE
 	********************************/
-	if ((boardRep->getPiece(destinationSquare)=='P')&&(startSquare[0]=destinationSquare[0])&&(destinationSquare[1]==startSquare[1]+2)){
-		int destinationIndex=boardRep->notationMap[destinationSquare];
-		bitset<64> EPWHITE;
-		EPWHITE.set(destinationIndex);
-		PAWN_MOVES=(boardRep->BP>>7)&~fileA&(EPWHITE>>8)&rank4&boardRep->emptySquares;
+	// PAWN_MOVES=(BP<<1)&(~fileH)&(EP)&(rank4);
+	// if (PAWN_MOVES.to_ulong()!=0){
+	// 	int index=bitScanForward((uint64_t)EP.to_ulong());
+	// 	list+=positionMap[index-1]+"x"+positionMap[index-8]+"ep ";
+	// }
 
-		for (int i=0;i<64;i++){
-			if (PAWN_MOVES[i]){
-				list+=boardRep->positionMap[i+7]+"x"+boardRep->positionMap[i]+"ep ";
-			}
-		}
-
-		PAWN_MOVES=(boardRep->BP>>9)&~fileH&(EPWHITE>>8)&rank4&boardRep->emptySquares;
-		for (int i=0;i<64;i++){
-			if (PAWN_MOVES[i]){
-				list+=boardRep->positionMap[i+9]+"x"+boardRep->positionMap[i]+"ep ";
-			}
-		}
-
-	}
+	// PAWN_MOVES=(BP>>1)&(~fileA)&(EP)&(rank4);
+	// if (PAWN_MOVES.to_ulong()!=0){
+	// 	int index=bitScanForward((uint64_t)EP.to_ulong());
+	// 	list+=positionMap[index+1]+"x"+positionMap[index-8]+"ep ";
+	// }
 
 	/****************************************
 	ALL OTHER PAWN FUNCTION CODE
 	*****************************************/
-	PAWN_MOVES=(boardRep->BP>>9)&boardRep->whitePieces&~rank1&~fileH;
+	PAWN_MOVES=(BP>>9)&whitePieces&~rank1&~fileH;
 	for (int i=0;i<64;i++){
 		if (PAWN_MOVES[i]){
-			list+=boardRep->positionMap[i+9]+"x"+boardRep->positionMap[i]+" ";
+			list+=positionMap[i+9]+"x"+positionMap[i]+" ";
 		}
 	}
 
-	PAWN_MOVES=(boardRep->BP>>7)&boardRep->whitePieces&~rank1&~fileA;
+	PAWN_MOVES=(BP>>7)&whitePieces&~rank1&~fileA;
 	for (int i=0;i<64;i++){
 		if (PAWN_MOVES[i]){
-			list+=boardRep->positionMap[i+7]+"x"+boardRep->positionMap[i]+" ";
+			list+=positionMap[i+7]+"x"+positionMap[i]+" ";
 		}
 	}
 
-	PAWN_MOVES=(boardRep->BP>>8)&boardRep->emptySquares&~rank1;
+	PAWN_MOVES=(BP>>8)&emptySquares&~rank1;
 	for (int i=0;i<64;i++){
 		if (PAWN_MOVES[i]){
-			list+=boardRep->positionMap[i+8]+"-"+boardRep->positionMap[i]+" ";
+			list+=positionMap[i+8]+"-"+positionMap[i]+" ";
 		}
 	}
 
-	PAWN_MOVES=(boardRep->BP>>16)&boardRep->emptySquares&(boardRep->emptySquares>>8)&~rank1&rank5;
+	PAWN_MOVES=(BP>>16)&emptySquares&(emptySquares>>8)&~rank1&rank5;
 
 	for (int i=0;i<64;i++){
 		if (PAWN_MOVES[i]){
-			list+=boardRep->positionMap[i+16]+"-"+boardRep->positionMap[i]+" ";
+			list+=positionMap[i+16]+"-"+positionMap[i]+" ";
 		}
 	}
 
-	PAWN_MOVES=(boardRep->BP>>7)&boardRep->whitePieces&rank1&~fileA;
+	PAWN_MOVES=(BP>>7)&whitePieces&rank1&~fileA;
 	for (int i=0;i<64;i++){
 		if (PAWN_MOVES[i]){
-			list+=boardRep->positionMap[i+7]+"x"+boardRep->positionMap[i]+"=q ";
-			list+=boardRep->positionMap[i+7]+"x"+boardRep->positionMap[i]+"=r ";
-			list+=boardRep->positionMap[i+7]+"x"+boardRep->positionMap[i]+"=n ";
-			list+=boardRep->positionMap[i+7]+"x"+boardRep->positionMap[i]+"=b ";
+			list+=positionMap[i+7]+"x"+positionMap[i]+"=q ";
+			list+=positionMap[i+7]+"x"+positionMap[i]+"=r ";
+			list+=positionMap[i+7]+"x"+positionMap[i]+"=n ";
+			list+=positionMap[i+7]+"x"+positionMap[i]+"=b ";
 		}
 	}
 
-	PAWN_MOVES=(boardRep->BP>>9)&boardRep->whitePieces&rank1&~fileH;
+	PAWN_MOVES=(BP>>9)&whitePieces&rank1&~fileH;
 	for (int i=0;i<64;i++){
 		if (PAWN_MOVES[i]){
-			list+=boardRep->positionMap[i+9]+"x"+boardRep->positionMap[i]+"=q ";
-			list+=boardRep->positionMap[i+9]+"x"+boardRep->positionMap[i]+"=r ";
-			list+=boardRep->positionMap[i+9]+"x"+boardRep->positionMap[i]+"=n ";
-			list+=boardRep->positionMap[i+9]+"x"+boardRep->positionMap[i]+"=b ";
+			list+=positionMap[i+9]+"x"+positionMap[i]+"=q ";
+			list+=positionMap[i+9]+"x"+positionMap[i]+"=r ";
+			list+=positionMap[i+9]+"x"+positionMap[i]+"=n ";
+			list+=positionMap[i+9]+"x"+positionMap[i]+"=b ";
 		}
 	}
 
-	PAWN_MOVES=(boardRep->BP>>8)&boardRep->emptySquares&rank1;
+	PAWN_MOVES=(BP>>8)&emptySquares&rank1;
 	for (int i=0;i<64;i++){
 		if (PAWN_MOVES[i]){
-			list+=boardRep->positionMap[i+8]+"-"+boardRep->positionMap[i]+"=q ";
-			list+=boardRep->positionMap[i+8]+"-"+boardRep->positionMap[i]+"=r ";
-			list+=boardRep->positionMap[i+8]+"-"+boardRep->positionMap[i]+"=n ";
-			list+=boardRep->positionMap[i+8]+"-"+boardRep->positionMap[i]+"=b ";
+			list+=positionMap[i+8]+"-"+positionMap[i]+"=q ";
+			list+=positionMap[i+8]+"-"+positionMap[i]+"=r ";
+			list+=positionMap[i+8]+"-"+positionMap[i]+"=n ";
+			list+=positionMap[i+8]+"-"+positionMap[i]+"=b ";
 		}
 	}
 
 	return list;
 }
 
-string Moves::possibleWR(){
+string Moves::possibleWR(bitset<64> WR, char* board,bitset<64> whitePieces, bitset<64> blackPieces, bitset<64> occupiedSquares, bitset<64> emptySquares){
 	string list="";
 	vector<int> rook_positions;
 
 	for (int i=0;i<64;i++){
-		if (boardRep->WR[i]){
+		if (WR[i]){
 			rook_positions.push_back(i);
 		}
 	}
@@ -326,7 +333,7 @@ string Moves::possibleWR(){
 	}
 	for (int i=0;i<(int)rook_positions.size();i++){
 		bitset<64> rookMoves(HandVMoves(rook_positions[i]));
-		bitset<64> ROOK_MOVES = rookMoves & (~boardRep->whitePieces);
+		bitset<64> ROOK_MOVES = rookMoves & (~whitePieces);
 		vector<int> rook_destinations;
 
 		for (int j=0;j<64;j++){
@@ -336,10 +343,10 @@ string Moves::possibleWR(){
 		}
 
 		for (int j=0;j<(int)(rook_destinations.size());j++){
-			if (boardRep->gameBoard[rook_destinations[j]]=='*'){
-				list+=boardRep->positionMap[rook_positions[i]]+"-"+boardRep->positionMap[rook_destinations[j]]+" ";
+			if (board[rook_destinations[j]]=='*'){
+				list+=positionMap[rook_positions[i]]+"-"+positionMap[rook_destinations[j]]+" ";
 			}else{
-				list+=boardRep->positionMap[rook_positions[i]]+"x"+boardRep->positionMap[rook_destinations[j]]+" ";
+				list+=positionMap[rook_positions[i]]+"x"+positionMap[rook_destinations[j]]+" ";
 			}
 		}
 
@@ -347,12 +354,20 @@ string Moves::possibleWR(){
 	return list;
 }
 
-string Moves::possibleBR(){
+void Moves::updateGenPositions(){
+
+	whitePieces = (WP|WR|WN|WB|WK|WQ);
+	blackPieces = (BP|BR|BN|BB|BK|BQ);
+	occupiedSquares = (whitePieces | blackPieces);
+	emptySquares = (~occupiedSquares);
+}
+
+string Moves::possibleBR(bitset<64> BR, char* board,bitset<64> whitePieces, bitset<64> blackPieces, bitset<64> occupiedSquares, bitset<64> emptySquares){
 	string list="";
 	vector<int> rook_positions;
 
 	for (int i=0;i<64;i++){
-		if (boardRep->BR[i]){
+		if (BR[i]){
 			rook_positions.push_back(i);
 		}
 	}
@@ -361,7 +376,7 @@ string Moves::possibleBR(){
 	}
 	for (int i=0;i<(int)rook_positions.size();i++){
 		bitset<64> rookMoves(HandVMoves(rook_positions[i]));
-		bitset<64> ROOK_MOVES = rookMoves & (~boardRep->blackPieces);
+		bitset<64> ROOK_MOVES = rookMoves & (~blackPieces);
 		vector<int> rook_destinations;
 
 		for (int j=0;j<64;j++){
@@ -371,10 +386,10 @@ string Moves::possibleBR(){
 		}
 
 		for (int j=0;j<(int)(rook_destinations.size());j++){
-			if (boardRep->gameBoard[rook_destinations[j]]=='*'){
-				list+=boardRep->positionMap[rook_positions[i]]+"-"+boardRep->positionMap[rook_destinations[j]]+" ";
+			if (board[rook_destinations[j]]=='*'){
+				list+=positionMap[rook_positions[i]]+"-"+positionMap[rook_destinations[j]]+" ";
 			}else{
-				list+=boardRep->positionMap[rook_positions[i]]+"x"+boardRep->positionMap[rook_destinations[j]]+" ";
+				list+=positionMap[rook_positions[i]]+"x"+positionMap[rook_destinations[j]]+" ";
 			}
 		}
 
@@ -382,13 +397,13 @@ string Moves::possibleBR(){
 	return list;
 }
 
-string Moves::possibleWB(){
+string Moves::possibleWB(bitset<64> WB, char* board,bitset<64> whitePieces, bitset<64> blackPieces, bitset<64> occupiedSquares, bitset<64> emptySquares){
 	string list="";
 	vector<int> bishop_positions;
 
 
 	for (int i=0;i<64;i++){
-		if (boardRep->WB[i]){
+		if (WB[i]){
 			bishop_positions.push_back(i);
 		}
 	}
@@ -397,7 +412,7 @@ string Moves::possibleWB(){
 	}
 	for (int i=0;i<(int)bishop_positions.size();i++){
 		bitset<64> bishopMoves(DandAntiMoves(bishop_positions[i]));
-		bitset<64> BISHOP_MOVES = bishopMoves & (~boardRep->whitePieces);
+		bitset<64> BISHOP_MOVES = bishopMoves & (~whitePieces);
 		vector<int> bishop_destinations;
 
 		for (int j=0;j<64;j++){
@@ -407,10 +422,10 @@ string Moves::possibleWB(){
 		}
 
 		for (int j=0;j<(int)(bishop_destinations.size());j++){
-			if (boardRep->gameBoard[bishop_destinations[j]]=='*'){
-				list+=boardRep->positionMap[bishop_positions[i]]+"-"+boardRep->positionMap[bishop_destinations[j]]+" ";
+			if (board[bishop_destinations[j]]=='*'){
+				list+=positionMap[bishop_positions[i]]+"-"+positionMap[bishop_destinations[j]]+" ";
 			}else{
-				list+=boardRep->positionMap[bishop_positions[i]]+"x"+boardRep->positionMap[bishop_destinations[j]]+" ";
+				list+=positionMap[bishop_positions[i]]+"x"+positionMap[bishop_destinations[j]]+" ";
 			}
 		}
 
@@ -418,13 +433,13 @@ string Moves::possibleWB(){
 	return list;
 }
 
-string Moves::possibleBB(){
+string Moves::possibleBB(bitset<64> BB, char* board,bitset<64> whitePieces, bitset<64> blackPieces, bitset<64> occupiedSquares, bitset<64> emptySquares){
 	string list="";
 	vector<int> bishop_positions;
 
 
 	for (int i=0;i<64;i++){
-		if (boardRep->BB[i]){
+		if (BB[i]){
 			bishop_positions.push_back(i);
 		}
 	}
@@ -433,7 +448,7 @@ string Moves::possibleBB(){
 	}
 	for (int i=0;i<(int)bishop_positions.size();i++){
 		bitset<64> bishopMoves(DandAntiMoves(bishop_positions[i]));
-		bitset<64> BISHOP_MOVES = bishopMoves & (~boardRep->blackPieces);
+		bitset<64> BISHOP_MOVES = bishopMoves & (~blackPieces);
 		vector<int> bishop_destinations;
 
 		for (int j=0;j<64;j++){
@@ -443,10 +458,10 @@ string Moves::possibleBB(){
 		}
 
 		for (int j=0;j<(int)(bishop_destinations.size());j++){
-			if (boardRep->gameBoard[bishop_destinations[j]]=='*'){
-				list+=boardRep->positionMap[bishop_positions[i]]+"-"+boardRep->positionMap[bishop_destinations[j]]+" ";
+			if (board[bishop_destinations[j]]=='*'){
+				list+=positionMap[bishop_positions[i]]+"-"+positionMap[bishop_destinations[j]]+" ";
 			}else{
-				list+=boardRep->positionMap[bishop_positions[i]]+"x"+boardRep->positionMap[bishop_destinations[j]]+" ";
+				list+=positionMap[bishop_positions[i]]+"x"+positionMap[bishop_destinations[j]]+" ";
 			}
 		}
 
@@ -454,13 +469,13 @@ string Moves::possibleBB(){
 	return list;
 }
 
-string Moves::possibleWQ(){
+string Moves::possibleWQ(bitset<64> WQ, char* board,bitset<64> whitePieces, bitset<64> blackPieces, bitset<64> occupiedSquares, bitset<64> emptySquares){
 	string list="";
 	vector<int> queen_positions;
 
 
 	for (int i=0;i<64;i++){
-		if (boardRep->WQ[i]){
+		if (WQ[i]){
 			queen_positions.push_back(i);
 		}
 	}
@@ -471,7 +486,7 @@ string Moves::possibleWQ(){
 		bitset<64> diagnolAttacks(DandAntiMoves(queen_positions[i]));
 		bitset<64> lineAttacks(HandVMoves(queen_positions[i]));
 		bitset<64> queenMoves=diagnolAttacks|lineAttacks;
-		bitset<64> QUEEN_MOVES = queenMoves & (~boardRep->whitePieces);
+		bitset<64> QUEEN_MOVES = queenMoves & (~whitePieces);
 		vector<int> queen_destinations;
 
 		for (int j=0;j<64;j++){
@@ -481,10 +496,10 @@ string Moves::possibleWQ(){
 		}
 
 		for (int j=0;j<(int)(queen_destinations.size());j++){
-			if (boardRep->gameBoard[queen_destinations[j]]=='*'){
-				list+=boardRep->positionMap[queen_positions[i]]+"-"+boardRep->positionMap[queen_destinations[j]]+" ";
+			if (board[queen_destinations[j]]=='*'){
+				list+=positionMap[queen_positions[i]]+"-"+positionMap[queen_destinations[j]]+" ";
 			}else{
-				list+=boardRep->positionMap[queen_positions[i]]+"x"+boardRep->positionMap[queen_destinations[j]]+" ";
+				list+=positionMap[queen_positions[i]]+"x"+positionMap[queen_destinations[j]]+" ";
 			}
 		}
 
@@ -492,12 +507,12 @@ string Moves::possibleWQ(){
 	return list;
 }
 
-string Moves::possibleBQ(){
+string Moves::possibleBQ(bitset<64> BQ, char* board,bitset<64> whitePieces, bitset<64> blackPieces, bitset<64> occupiedSquares, bitset<64> emptySquares){
 	string list="";
 	vector<int> queen_positions;
 
 	for (int i=0;i<64;i++){
-		if (boardRep->BQ[i]){
+		if (BQ[i]){
 			queen_positions.push_back(i);
 		}
 	}
@@ -508,7 +523,7 @@ string Moves::possibleBQ(){
 		bitset<64> diagnolAttacks(DandAntiMoves(queen_positions[i]));
 		bitset<64> lineAttacks(HandVMoves(queen_positions[i]));
 		bitset<64> queenMoves=diagnolAttacks|lineAttacks;
-		bitset<64> QUEEN_MOVES = queenMoves & (~boardRep->blackPieces);
+		bitset<64> QUEEN_MOVES = queenMoves & (~blackPieces);
 		vector<int> queen_destinations;
 
 		for (int j=0;j<64;j++){
@@ -518,10 +533,10 @@ string Moves::possibleBQ(){
 		}
 
 		for (int j=0;j<(int)(queen_destinations.size());j++){
-			if (boardRep->gameBoard[queen_destinations[j]]=='*'){
-				list+=boardRep->positionMap[queen_positions[i]]+"-"+boardRep->positionMap[queen_destinations[j]]+" ";
+			if (board[queen_destinations[j]]=='*'){
+				list+=positionMap[queen_positions[i]]+"-"+positionMap[queen_destinations[j]]+" ";
 			}else{
-				list+=boardRep->positionMap[queen_positions[i]]+"x"+boardRep->positionMap[queen_destinations[j]]+" ";
+				list+=positionMap[queen_positions[i]]+"x"+positionMap[queen_destinations[j]]+" ";
 			}
 		}
 
@@ -529,13 +544,13 @@ string Moves::possibleBQ(){
 	return list;
 }
 
-string Moves::possibleWN(){
+string Moves::possibleWN(bitset<64> WN, char* board, bitset<64> whitePieces, bitset<64> blackPieces, bitset<64> occupiedSquares, bitset<64> emptySquares){
 	string list="";
 	vector<int> knight_positions;
 	
 
 	for (int i=0;i<64;i++){
-		if (boardRep->WN[i]){
+		if (WN[i]){
 			knight_positions.push_back(i);
 		}
 	}
@@ -560,7 +575,7 @@ string Moves::possibleWN(){
 		bitset<64> spot_7 = (knight_loc & ~fileA) << 17;
 		bitset<64> spot_8 = (knight_loc & ~fileA & ~fileB) << 10;
 
-		bitset<64> KNIGHT_MOVES = (spot_1 | spot_2 | spot_3 | spot_4 | spot_5 | spot_6 |spot_7 | spot_8)&(~boardRep->whitePieces);
+		bitset<64> KNIGHT_MOVES = (spot_1 | spot_2 | spot_3 | spot_4 | spot_5 | spot_6 |spot_7 | spot_8)&(~whitePieces);
 
 		for (int j=0;j<64;j++){
 			if (KNIGHT_MOVES[j]){
@@ -571,10 +586,10 @@ string Moves::possibleWN(){
 
 
 		for (int j=0;j<(int)(knight_destinations.size());j++){
-			if (boardRep->gameBoard[knight_destinations[j]]=='*'){
-				list+=boardRep->positionMap[knight_positions[i]]+"-"+boardRep->positionMap[knight_destinations[j]]+" ";
+			if (board[knight_destinations[j]]=='*'){
+				list+=positionMap[knight_positions[i]]+"-"+positionMap[knight_destinations[j]]+" ";
 			}else{
-				list+=boardRep->positionMap[knight_positions[i]]+"x"+boardRep->positionMap[knight_destinations[j]]+" ";
+				list+=positionMap[knight_positions[i]]+"x"+positionMap[knight_destinations[j]]+" ";
 			}
 		}
 
@@ -584,13 +599,13 @@ string Moves::possibleWN(){
 	return list;
 }
 
-string Moves::possibleBN(){
+string Moves::possibleBN(bitset<64> BN, char* board,bitset<64> whitePieces, bitset<64> blackPieces, bitset<64> occupiedSquares, bitset<64> emptySquares){
 	string list="";
 	vector<int> knight_positions;
 	
 
 	for (int i=0;i<64;i++){
-		if (boardRep->BN[i]){
+		if (BN[i]){
 			knight_positions.push_back(i);
 		}
 	}
@@ -615,7 +630,7 @@ string Moves::possibleBN(){
 		bitset<64> spot_7 = (knight_loc & ~fileA) << 17;
 		bitset<64> spot_8 = (knight_loc & ~fileA & ~fileB) << 10;
 
-		bitset<64> KNIGHT_MOVES = (spot_1 | spot_2 | spot_3 | spot_4 | spot_5 | spot_6 |spot_7 | spot_8)&(~boardRep->blackPieces);
+		bitset<64> KNIGHT_MOVES = (spot_1 | spot_2 | spot_3 | spot_4 | spot_5 | spot_6 |spot_7 | spot_8)&(~blackPieces);
 
 		for (int j=0;j<64;j++){
 			if (KNIGHT_MOVES[j]){
@@ -626,10 +641,10 @@ string Moves::possibleBN(){
 
 
 		for (int j=0;j<(int)(knight_destinations.size());j++){
-			if (boardRep->gameBoard[knight_destinations[j]]=='*'){
-				list+=boardRep->positionMap[knight_positions[i]]+"-"+boardRep->positionMap[knight_destinations[j]]+" ";
+			if (board[knight_destinations[j]]=='*'){
+				list+=positionMap[knight_positions[i]]+"-"+positionMap[knight_destinations[j]]+" ";
 			}else{
-				list+=boardRep->positionMap[knight_positions[i]]+"x"+boardRep->positionMap[knight_destinations[j]]+" ";
+				list+=positionMap[knight_positions[i]]+"x"+positionMap[knight_destinations[j]]+" ";
 			}
 		}
 
@@ -653,8 +668,8 @@ uint64_t Moves::HandVMoves(int arrayPos){
 	*******************************************/
 	bitset<64> slider;
 	slider.set(arrayPos);
-	bitset<64> horizontal=(boardRep->occupiedSquares.to_ulong() - (2*slider.to_ulong()))^(reverseBits(reverseBits(boardRep->occupiedSquares.to_ulong())-(2 * reverseBits(slider.to_ulong()))));
-	bitset<64> vertical = ((boardRep->occupiedSquares & files[arrayPos % 8]).to_ulong() - (2 * slider.to_ulong())) ^ (reverseBits(reverseBits((boardRep->occupiedSquares & files[arrayPos % 8]).to_ulong())-(2*reverseBits(slider.to_ulong()))));
+	bitset<64> horizontal=(occupiedSquares.to_ulong() - (2*slider.to_ulong()))^(reverseBits(reverseBits(occupiedSquares.to_ulong())-(2 * reverseBits(slider.to_ulong()))));
+	bitset<64> vertical = ((occupiedSquares & files[arrayPos % 8]).to_ulong() - (2 * slider.to_ulong())) ^ (reverseBits(reverseBits((occupiedSquares & files[arrayPos % 8]).to_ulong())-(2*reverseBits(slider.to_ulong()))));
 	return (uint64_t)((horizontal & ranks[floor(arrayPos/8)])|(vertical & files[arrayPos % 8])).to_ulong();
 }
 
@@ -671,17 +686,71 @@ uint64_t Moves::DandAntiMoves(int arrayPos){
 	bitset<64> diagnol(x);
 	bitset<64> adiagnol(y);
 
-	bitset<64> diagnolPossibilities = ((boardRep->occupiedSquares & diagnol).to_ulong() - (2 * slider.to_ulong()))^(reverseBits(reverseBits((boardRep->occupiedSquares&diagnol).to_ulong()) - (2 * reverseBits(slider.to_ulong()))));
-	bitset<64> adiagnolPossibilities = ((boardRep->occupiedSquares & adiagnol).to_ulong() - (2 * slider.to_ulong()))^(reverseBits(reverseBits((boardRep->occupiedSquares&adiagnol).to_ulong()) - (2 * reverseBits(slider.to_ulong()))));
+	bitset<64> diagnolPossibilities = ((occupiedSquares & diagnol).to_ulong() - (2 * slider.to_ulong()))^(reverseBits(reverseBits((occupiedSquares&diagnol).to_ulong()) - (2 * reverseBits(slider.to_ulong()))));
+	bitset<64> adiagnolPossibilities = ((occupiedSquares & adiagnol).to_ulong() - (2 * slider.to_ulong()))^(reverseBits(reverseBits((occupiedSquares&adiagnol).to_ulong()) - (2 * reverseBits(slider.to_ulong()))));
 	return (uint64_t)((diagnolPossibilities&diagnol) | (adiagnolPossibilities&adiagnol)).to_ulong();
 
 }
 
-vector<string> Moves::possibleWMoves(string history){
+string Moves::possibleCW(bool CWK, bool CWQ){
+	string list = "";
+	if (CWK){
+		list+="O-Ow ";
+	}
+	if (CWQ){
+		list+="O-O-Ow ";
+	}
+	return list;
+
+}
+string Moves::possibleCB(bool CBK, bool CBQ){
+	string list = "";
+	if (CWK){
+		list+="O-Ob ";
+	}
+	if (CWQ){
+		list+="O-O-Ob ";
+	}
+	return list;
+
+}
+
+vector<string> Moves::possibleWMoves(char* board){
 	string list;
 	string move;
 	vector<string> move_list;
-	list+=possibleWP(history)+possibleWQ()+possibleWB()+possibleWR()+possibleWN()+possibleWK();
+
+	for (int i=63;i>=0;i--){
+		if (board[i]=='P') WP.set(i);
+		if (board[i]=='R') WR.set(i);
+		if (board[i]=='N') WN.set(i);
+		if (board[i]=='B') WB.set(i);
+		if (board[i]=='Q') WQ.set(i);
+		if (board[i]=='K') WK.set(i);
+		if (board[i]=='p') BP.set(i);
+		if (board[i]=='r') BR.set(i);
+		if (board[i]=='n') BN.set(i);
+		if (board[i]=='b') BB.set(i);
+		if (board[i]=='q') BQ.set(i);
+		if (board[i]=='k') BK.set(i);
+	}
+
+	updateGenPositions();
+
+
+
+
+
+
+
+
+
+	list+=possibleWP(board, WP,whitePieces,blackPieces,occupiedSquares,emptySquares)+
+		possibleWQ(WQ, board, whitePieces,blackPieces,occupiedSquares,emptySquares)+
+		possibleWB(WB, board, whitePieces,blackPieces,occupiedSquares,emptySquares)+
+		possibleWR(WR, board, whitePieces,blackPieces,occupiedSquares,emptySquares)+
+		possibleWN(WN, board, whitePieces,blackPieces,occupiedSquares,emptySquares)+
+		possibleWK(WK, board, whitePieces,blackPieces,occupiedSquares,emptySquares);
 
 	stringstream ss(list);
 
@@ -696,7 +765,7 @@ vector<string> Moves::possibleWMoves(string history){
 		string startSquare=(*it2).substr(0,2);
 		string moveType = (*it2).substr(2,1);
 		string destinationSquare=(*it2).substr(3,2);
-		if(boardRep->getPiece(destinationSquare)=='k')
+		if(board[notationMap[destinationSquare]]=='k')
 	   	{
 			it2 = move_list.erase(it2); 
 	   	}
@@ -711,11 +780,36 @@ vector<string> Moves::possibleWMoves(string history){
 
 }
 
-vector<string> Moves::possibleBMoves(string history){
+vector<string> Moves::possibleBMoves(bitset<64> EP, char* board){
 	string list;
 	string move;
 	vector<string> move_list;
-	list+=possibleBP(history)+possibleBQ()+possibleBB()+possibleBR()+possibleBN()+possibleBK();
+
+	for (int i=0;i<64;i++){
+		if (board[i]=='P') WP.set(i);
+		if (board[i]=='R') WR.set(i);
+		if (board[i]=='N') WN.set(i);
+		if (board[i]=='B') WB.set(i);
+		if (board[i]=='Q') WQ.set(i);
+		if (board[i]=='K') WK.set(i);
+		if (board[i]=='p') BP.set(i);
+		if (board[i]=='r') BR.set(i);
+		if (board[i]=='n') BN.set(i);
+		if (board[i]=='b') BB.set(i);
+		if (board[i]=='q') BQ.set(i);
+		if (board[i]=='k') BK.set(i);
+	}
+
+	updateGenPositions();
+
+
+
+	list+=possibleBP(board,BP,whitePieces,blackPieces,occupiedSquares,emptySquares)+
+		possibleBQ(BQ,board,whitePieces,blackPieces,occupiedSquares,emptySquares)+
+		possibleBB(BB,board,whitePieces,blackPieces,occupiedSquares,emptySquares)+
+		possibleBR(BR,board,whitePieces,blackPieces,occupiedSquares,emptySquares)+
+		possibleBN(BN,board,whitePieces,blackPieces,occupiedSquares,emptySquares)+
+		possibleBK(BK,board,whitePieces,blackPieces,occupiedSquares,emptySquares);
 
 	stringstream ss(list);
 
@@ -730,7 +824,7 @@ vector<string> Moves::possibleBMoves(string history){
 		string startSquare=(*it2).substr(0,2);
 		string moveType = (*it2).substr(2,1);
 		string destinationSquare=(*it2).substr(3,2);
-		if(boardRep->getPiece(destinationSquare)=='k')
+		if(board[notationMap[destinationSquare]]=='k')
 	   	{
 			it2 = move_list.erase(it2); 
 	   	}
@@ -747,30 +841,30 @@ vector<string> Moves::possibleBMoves(string history){
 
 
 
-string Moves::possibleWK(){
+string Moves::possibleWK(bitset<64> WK, char* board, bitset<64> whitePieces, bitset<64> blackPieces, bitset<64> occupiedSquares, bitset<64> emptySquares){
 	bitset<64> KING_MOVES;
 	bitset<64> unsafe(~unsafeForWhite());
 	vector<int> king_destinations;
 	string list;
-	int kingLocation = bitScanForward((uint64_t)boardRep->WK.to_ulong());
+	int kingLocation = bitScanForward((uint64_t)WK.to_ulong());
 
-	KING_MOVES |= (boardRep->WK << 1) & ~fileH & ~boardRep->whitePieces & unsafe;
-	KING_MOVES |= (boardRep->WK >> 1) & ~fileA & ~boardRep->whitePieces & unsafe;
-	KING_MOVES |= (boardRep->WK >> 8) & ~boardRep->whitePieces & unsafe;
-	KING_MOVES |= (boardRep->WK << 8) & ~boardRep->whitePieces & unsafe;
-	KING_MOVES |= (boardRep->WK << 7) & ~fileA & ~boardRep->whitePieces & unsafe;
-	KING_MOVES |= (boardRep->WK << 9) & ~fileH & ~boardRep->whitePieces & unsafe;
-	KING_MOVES |= (boardRep->WK >> 7) & ~fileH & ~boardRep->whitePieces & unsafe;
-	KING_MOVES |= (boardRep->WK >> 9) & ~fileA & ~boardRep->whitePieces & unsafe;
+	KING_MOVES |= (WK << 1) & ~fileH & ~whitePieces & unsafe;
+	KING_MOVES |= (WK >> 1) & ~fileA & ~whitePieces & unsafe;
+	KING_MOVES |= (WK >> 8) & ~whitePieces & unsafe;
+	KING_MOVES |= (WK << 8) & ~whitePieces & unsafe;
+	KING_MOVES |= (WK << 7) & ~fileA & ~whitePieces & unsafe;
+	KING_MOVES |= (WK << 9) & ~fileH & ~whitePieces & unsafe;
+	KING_MOVES |= (WK >> 7) & ~fileH & ~whitePieces & unsafe;
+	KING_MOVES |= (WK >> 9) & ~fileA & ~whitePieces & unsafe;
 
 	for (int i=0;i<64;i++){
 		if (KING_MOVES[i]) king_destinations.push_back(i);
 	}
 	for (int j=0;j<(int)(king_destinations.size());j++){
-		if (boardRep->gameBoard[king_destinations[j]]=='*'){
-			list+=boardRep->positionMap[kingLocation]+"-"+boardRep->positionMap[king_destinations[j]]+" ";
+		if (board[king_destinations[j]]=='*'){
+			list+=positionMap[kingLocation]+"-"+positionMap[king_destinations[j]]+" ";
 		}else{
-			list+=boardRep->positionMap[kingLocation]+"x"+boardRep->positionMap[king_destinations[j]]+" ";
+			list+=positionMap[kingLocation]+"x"+positionMap[king_destinations[j]]+" ";
 		}
 	}
 	/********************************************************
@@ -785,30 +879,30 @@ string Moves::possibleWK(){
 	return list;
 }
 
-string Moves::possibleBK(){
+string Moves::possibleBK(bitset<64> BK, char* board, bitset<64> whitePieces, bitset<64> blackPieces, bitset<64> occupiedSquares, bitset<64> emptySquares){
 	bitset<64> KING_MOVES;
 	bitset<64> unsafe(~unsafeForBlack());
 	vector<int> king_destinations;
 	string list;
-	int kingLocation = bitScanForward((uint64_t)boardRep->BK.to_ulong());
+	int kingLocation = bitScanForward((uint64_t)BK.to_ulong());
 
-	KING_MOVES |= (boardRep->BK << 1) & ~fileH & ~boardRep->blackPieces & unsafe;
-	KING_MOVES |= (boardRep->BK >> 1) & ~fileA & ~boardRep->blackPieces & unsafe;
-	KING_MOVES |= (boardRep->BK >> 8) & ~boardRep->blackPieces & unsafe;
-	KING_MOVES |= (boardRep->BK << 8) & ~boardRep->blackPieces & unsafe;
-	KING_MOVES |= (boardRep->BK << 7) & ~fileA & ~boardRep->blackPieces & unsafe;
-	KING_MOVES |= (boardRep->BK << 9) & ~fileH & ~boardRep->blackPieces & unsafe;
-	KING_MOVES |= (boardRep->BK >> 7) & ~fileH & ~boardRep->blackPieces & unsafe;
-	KING_MOVES |= (boardRep->BK >> 9) & ~fileA & ~boardRep->blackPieces & unsafe;
+	KING_MOVES |= (BK << 1) & ~fileH & ~blackPieces & unsafe;
+	KING_MOVES |= (BK >> 1) & ~fileA & ~blackPieces & unsafe;
+	KING_MOVES |= (BK >> 8) & ~blackPieces & unsafe;
+	KING_MOVES |= (BK << 8) & ~blackPieces & unsafe;
+	KING_MOVES |= (BK << 7) & ~fileA & ~blackPieces & unsafe;
+	KING_MOVES |= (BK << 9) & ~fileH & ~blackPieces & unsafe;
+	KING_MOVES |= (BK >> 7) & ~fileH & ~blackPieces & unsafe;
+	KING_MOVES |= (BK >> 9) & ~fileA & ~blackPieces & unsafe;
 
 	for (int i=0;i<64;i++){
 		if (KING_MOVES[i]) king_destinations.push_back(i);
 	}
 	for (int j=0;j<(int)(king_destinations.size());j++){
-		if (boardRep->gameBoard[king_destinations[j]]=='*'){
-			list+=boardRep->positionMap[kingLocation]+"-"+boardRep->positionMap[king_destinations[j]]+" ";
+		if (board[king_destinations[j]]=='*'){
+			list+=positionMap[kingLocation]+"-"+positionMap[king_destinations[j]]+" ";
 		}else{
-			list+=boardRep->positionMap[kingLocation]+"x"+boardRep->positionMap[king_destinations[j]]+" ";
+			list+=positionMap[kingLocation]+"x"+positionMap[king_destinations[j]]+" ";
 		}
 	}
 	/********************************************************
@@ -842,10 +936,10 @@ uint64_t Moves::unsafeForBlack(){
 	vector<int> rookPositions;
 
 	for (int i=0;i<64;i++){
-		if (boardRep->WN[i]) knightPositions.push_back(i);
-		if (boardRep->WB[i]) bishopPositions.push_back(i);
-		if (boardRep->WQ[i]) queenPositions.push_back(i);
-		if (boardRep->WR[i]) rookPositions.push_back(i);
+		if (WN[i]) knightPositions.push_back(i);
+		if (WB[i]) bishopPositions.push_back(i);
+		if (WQ[i]) queenPositions.push_back(i);
+		if (WR[i]) rookPositions.push_back(i);
 	}
 	for (int i=0;i<(int)knightPositions.size();i++){
 		bitset<64> knight_loc;
@@ -862,34 +956,34 @@ uint64_t Moves::unsafeForBlack(){
 		bitset<64> spot_7 = (knight_loc & ~fileA) << 17;
 		bitset<64> spot_8 = (knight_loc & ~fileA & ~fileB) << 10;
 
-		KNIGHT_MOVES |= (spot_1 | spot_2 | spot_3 | spot_4 | spot_5 | spot_6 |spot_7 | spot_8)&(~boardRep->whitePieces);
+		KNIGHT_MOVES |= (spot_1 | spot_2 | spot_3 | spot_4 | spot_5 | spot_6 |spot_7 | spot_8)&(~whitePieces);
 	}
 	for (int i=0;i<(int)bishopPositions.size();i++){
 		bitset<64> bishopMoves(DandAntiMoves(bishopPositions[i]));
-		BISHOP_MOVES |= bishopMoves & (~boardRep->whitePieces);
+		BISHOP_MOVES |= bishopMoves & (~whitePieces);
 	}
 	for (int i=0;i<(int)rookPositions.size();i++){
 		bitset<64> rookMoves(HandVMoves(rookPositions[i]));
-		ROOK_MOVES |= rookMoves & (~boardRep->whitePieces);
+		ROOK_MOVES |= rookMoves & (~whitePieces);
 	}
 	for (int i=0;i<(int)queenPositions.size();i++){
 		bitset<64> diagnolAttacks(DandAntiMoves(queenPositions[i]));
 		bitset<64> lineAttacks(HandVMoves(queenPositions[i]));
 		bitset<64> queenMoves=diagnolAttacks|lineAttacks;
-		QUEEN_MOVES |= queenMoves & (~boardRep->whitePieces);
+		QUEEN_MOVES |= queenMoves & (~whitePieces);
 	}
 
-	WK_MOVES |= (boardRep->WK << 1) & ~fileH & ~boardRep->whitePieces;
-	WK_MOVES |= (boardRep->WK >> 1) & ~fileA & ~boardRep->whitePieces;
-	WK_MOVES |= (boardRep->WK >> 8) & ~boardRep->whitePieces;
-	WK_MOVES |= (boardRep->WK << 8) & ~boardRep->whitePieces;
-	WK_MOVES |= (boardRep->WK << 7) & ~fileA & ~boardRep->whitePieces;
-	WK_MOVES |= (boardRep->WK << 9) & ~fileH & ~boardRep->whitePieces;
-	WK_MOVES |= (boardRep->WK >> 7) & ~fileH & ~boardRep->whitePieces;
-	WK_MOVES |= (boardRep->WK >> 9) & ~fileA & ~boardRep->whitePieces;
+	WK_MOVES |= (WK << 1) & ~fileH & ~whitePieces;
+	WK_MOVES |= (WK >> 1) & ~fileA & ~whitePieces;
+	WK_MOVES |= (WK >> 8) & ~whitePieces;
+	WK_MOVES |= (WK << 8) & ~whitePieces;
+	WK_MOVES |= (WK << 7) & ~fileA & ~whitePieces;
+	WK_MOVES |= (WK << 9) & ~fileH & ~whitePieces;
+	WK_MOVES |= (WK >> 7) & ~fileH & ~whitePieces;
+	WK_MOVES |= (WK >> 9) & ~fileA & ~whitePieces;
 
-	unsafeForBlack |= (boardRep->WP<<7)&~fileA;
-	unsafeForBlack |= (boardRep->WP<<9)&~fileH;
+	unsafeForBlack |= (WP<<7)&~fileA;
+	unsafeForBlack |= (WP<<9)&~fileH;
 	unsafeForBlack |= KNIGHT_MOVES;
 	unsafeForBlack |= BISHOP_MOVES;
 	unsafeForBlack |= ROOK_MOVES;
@@ -912,10 +1006,10 @@ uint64_t Moves::unsafeForWhite(){
 	vector<int> rookPositions;
 
 	for (int i=0;i<64;i++){
-		if (boardRep->BN[i]) knightPositions.push_back(i);
-		if (boardRep->BB[i]) bishopPositions.push_back(i);
-		if (boardRep->BQ[i]) queenPositions.push_back(i);
-		if (boardRep->BR[i]) rookPositions.push_back(i);
+		if (BN[i]) knightPositions.push_back(i);
+		if (BB[i]) bishopPositions.push_back(i);
+		if (BQ[i]) queenPositions.push_back(i);
+		if (BR[i]) rookPositions.push_back(i);
 	}
 	for (int i=0;i<(int)knightPositions.size();i++){
 		bitset<64> knight_loc;
@@ -932,33 +1026,33 @@ uint64_t Moves::unsafeForWhite(){
 		bitset<64> spot_7 = (knight_loc & ~fileA) << 17;
 		bitset<64> spot_8 = (knight_loc & ~fileA & ~fileB) << 10;
 
-		KNIGHT_MOVES |= (spot_1 | spot_2 | spot_3 | spot_4 | spot_5 | spot_6 |spot_7 | spot_8)&(~boardRep->blackPieces);
+		KNIGHT_MOVES |= (spot_1 | spot_2 | spot_3 | spot_4 | spot_5 | spot_6 |spot_7 | spot_8)&(~blackPieces);
 	}
 	for (int i=0;i<(int)bishopPositions.size();i++){
 		bitset<64> bishopMoves(DandAntiMoves(bishopPositions[i]));
-		BISHOP_MOVES |= bishopMoves & (~boardRep->blackPieces);
+		BISHOP_MOVES |= bishopMoves & (~blackPieces);
 	}
 	for (int i=0;i<(int)rookPositions.size();i++){
 		bitset<64> rookMoves(HandVMoves(rookPositions[i]));
-		ROOK_MOVES |= rookMoves & (~boardRep->blackPieces);
+		ROOK_MOVES |= rookMoves & (~blackPieces);
 	}
 	for (int i=0;i<(int)queenPositions.size();i++){
 		bitset<64> diagnolAttacks(DandAntiMoves(queenPositions[i]));
 		bitset<64> lineAttacks(HandVMoves(queenPositions[i]));
 		bitset<64> queenMoves=diagnolAttacks|lineAttacks;
-		QUEEN_MOVES |= queenMoves & (~boardRep->blackPieces);
+		QUEEN_MOVES |= queenMoves & (~blackPieces);
 	}
-	BK_MOVES |= (boardRep->BK << 1) & ~fileH & ~boardRep->blackPieces;
-	BK_MOVES |= (boardRep->BK >> 1) & ~fileA & ~boardRep->blackPieces;
-	BK_MOVES |= (boardRep->BK >> 8) & ~boardRep->blackPieces;
-	BK_MOVES |= (boardRep->BK << 8) & ~boardRep->blackPieces;
-	BK_MOVES |= (boardRep->BK << 7) & ~fileA & ~boardRep->blackPieces;
-	BK_MOVES |= (boardRep->BK << 9) & ~fileH & ~boardRep->blackPieces;
-	BK_MOVES |= (boardRep->BK >> 7) & ~fileH & ~boardRep->blackPieces;
-	BK_MOVES |= (boardRep->BK >> 9) & ~fileA & ~boardRep->blackPieces;
+	BK_MOVES |= (BK << 1) & ~fileH & ~blackPieces;
+	BK_MOVES |= (BK >> 1) & ~fileA & ~blackPieces;
+	BK_MOVES |= (BK >> 8) & ~blackPieces;
+	BK_MOVES |= (BK << 8) & ~blackPieces;
+	BK_MOVES |= (BK << 7) & ~fileA & ~blackPieces;
+	BK_MOVES |= (BK << 9) & ~fileH & ~blackPieces;
+	BK_MOVES |= (BK >> 7) & ~fileH & ~blackPieces;
+	BK_MOVES |= (BK >> 9) & ~fileA & ~blackPieces;
 
-	unsafeForWhite |= (boardRep->BP>>7)&~fileH;
-	unsafeForWhite |= (boardRep->BP>>9)&~fileA;
+	unsafeForWhite |= (BP>>7)&~fileH;
+	unsafeForWhite |= (BP>>9)&~fileA;
 	unsafeForWhite |= KNIGHT_MOVES;
 	unsafeForWhite |= BISHOP_MOVES;
 	unsafeForWhite |= ROOK_MOVES;
@@ -968,474 +1062,9 @@ uint64_t Moves::unsafeForWhite(){
 	return (uint64_t) unsafeForWhite.to_ulong();
 }
 
-void Moves::makeMove(string move){
-	string startSquare=move.substr(0,2);
-	string moveType = move.substr(2,1);
-	string destinationSquare=move.substr(3,2);
-	string special;
-	if (move.size()>5){
-		special=move.substr(5,2);
-		cout<<special;
-	}
-
-	int startIndex=boardRep->notationMap[startSquare];
-	int destinationIndex=boardRep->notationMap[destinationSquare];
-
-	if (moveType=="-"){
-		if(boardRep->getPiece(startSquare)=='P')
-		{
-			boardRep->WP.reset(startIndex);
-			if (special=="=Q") boardRep->WQ.set(destinationIndex);
-			else if (special=="=R") boardRep->WR.set(destinationIndex);
-			else if (special=="=B") boardRep->WB.set(destinationIndex);
-			else if (special=="=N") boardRep->WN.set(destinationIndex);
-			else boardRep->WP.set(destinationIndex);
-
-		}
-		if(boardRep->getPiece(startSquare)=='R')
-		{
-			boardRep->WR.reset(startIndex);
-			boardRep->WR.set(destinationIndex);	
-		}
-		if(boardRep->getPiece(startSquare)=='N')
-		{
-			boardRep->WN.reset(startIndex);
-			boardRep->WN.set(destinationIndex);
-		}
-		if(boardRep->getPiece(startSquare)=='B')
-		{
-			boardRep->WB.reset(startIndex);
-			boardRep->WB.set(destinationIndex);
-		}
-		if(boardRep->getPiece(startSquare)=='Q')
-		{
-			boardRep->WQ.reset(startIndex);
-			boardRep->WQ.set(destinationIndex);
-		}
-		if(boardRep->getPiece(startSquare)=='K')
-		{
-			boardRep->WK.reset(startIndex);
-			boardRep->WK.set(destinationIndex);
-		}
-		if(boardRep->getPiece(startSquare)=='p')
-		{
-			boardRep->BP.reset(startIndex);
-			if (special=="=q") boardRep->BQ.set(destinationIndex);
-			else if (special=="=r") boardRep->BR.set(destinationIndex);
-			else if (special=="=b") boardRep->BB.set(destinationIndex);
-			else if (special=="=n") boardRep->BN.set(destinationIndex);
-			else boardRep->BP.set(destinationIndex);
-		}
-		if(boardRep->getPiece(startSquare)=='r')
-		{
-			boardRep->BR.reset(startIndex);
-			boardRep->BR.set(destinationIndex);	
-		}
-		if(boardRep->getPiece(startSquare)=='n')
-		{
-			boardRep->BN.reset(startIndex);
-			boardRep->BN.set(destinationIndex);
-		}
-		if(boardRep->getPiece(startSquare)=='b')
-		{
-			boardRep->BB.reset(startIndex);
-			boardRep->BB.set(destinationIndex);
-		}
-		if(boardRep->getPiece(startSquare)=='q')
-		{
-			boardRep->BQ.reset(startIndex);
-			boardRep->BQ.set(destinationIndex);
-		}
-		if(boardRep->getPiece(startSquare)=='k')
-		{
-			boardRep->BK.reset(startIndex);
-			boardRep->BK.set(destinationIndex);
-		}
-	}
-	if (moveType=="x"){
-		if(boardRep->getPiece(startSquare)=='P')
-		{
-			if (boardRep->getPiece(destinationSquare)=='p'){
-				boardRep->WP.reset(startIndex);
-
-				if (special=="ep"){
-					boardRep->WP.set(destinationIndex);
-					boardRep->BP.reset(destinationIndex-8);
-				}else{
-					boardRep->WP.set(destinationIndex);
-					boardRep->BP.reset(destinationIndex);
-				}
-				
-			}
-			if (boardRep->getPiece(destinationSquare)=='r'){
-				boardRep->WP.reset(startIndex);
-				if (special=="=Q") {boardRep->WQ.set(destinationIndex);boardRep->BR.reset(destinationIndex);}
-				else if (special=="=R") {boardRep->WR.set(destinationIndex);boardRep->BR.reset(destinationIndex);}
-				else if (special=="=B") {boardRep->WB.set(destinationIndex);boardRep->BR.reset(destinationIndex);}
-				else if (special=="=N") {boardRep->WN.set(destinationIndex);boardRep->BR.reset(destinationIndex);}
-				else {boardRep->WP.set(destinationIndex);boardRep->BR.reset(destinationIndex);}
-			}
-			if (boardRep->getPiece(destinationSquare)=='n'){
-				boardRep->WP.reset(startIndex);
-				if (special=="=Q") {boardRep->WQ.set(destinationIndex);boardRep->BN.reset(destinationIndex);}
-				else if (special=="=R") {boardRep->WR.set(destinationIndex);boardRep->BN.reset(destinationIndex);}
-				else if (special=="=B") {boardRep->WB.set(destinationIndex);boardRep->BN.reset(destinationIndex);}
-				else if (special=="=N") {boardRep->WN.set(destinationIndex);boardRep->BN.reset(destinationIndex);}
-				else {boardRep->WP.set(destinationIndex);boardRep->BN.reset(destinationIndex);}
-			}
-			if (boardRep->getPiece(destinationSquare)=='b'){
-				boardRep->WP.reset(startIndex);
-				if (special=="=Q") {boardRep->WQ.set(destinationIndex);boardRep->BB.reset(destinationIndex);}
-				else if (special=="=R") {boardRep->WR.set(destinationIndex);boardRep->BB.reset(destinationIndex);}
-				else if (special=="=B") {boardRep->WB.set(destinationIndex);boardRep->BB.reset(destinationIndex);}
-				else if (special=="=N") {boardRep->WN.set(destinationIndex);boardRep->BB.reset(destinationIndex);}
-				else {boardRep->WP.set(destinationIndex);boardRep->BB.reset(destinationIndex);}
-			}
-			if (boardRep->getPiece(destinationSquare)=='q'){
-				boardRep->WP.reset(startIndex);
-				if (special=="=Q") {boardRep->WQ.set(destinationIndex);boardRep->BQ.reset(destinationIndex);}
-				else if (special=="=R") {boardRep->WR.set(destinationIndex);boardRep->BQ.reset(destinationIndex);}
-				else if (special=="=B") {boardRep->WB.set(destinationIndex);boardRep->BQ.reset(destinationIndex);}
-				else if (special=="=N") {boardRep->WN.set(destinationIndex);boardRep->BQ.reset(destinationIndex);}
-				else {boardRep->WP.set(destinationIndex);boardRep->BQ.reset(destinationIndex);}
-			}
-		}
-		if(boardRep->getPiece(startSquare)=='R')
-		{
-			if (boardRep->getPiece(destinationSquare)=='p'){
-				boardRep->WR.reset(startIndex);
-				boardRep->WR.set(destinationIndex);
-				boardRep->BP.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='r'){
-				boardRep->WR.reset(startIndex);
-				boardRep->WR.set(destinationIndex);
-				boardRep->BR.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='n'){
-				boardRep->WR.reset(startIndex);
-				boardRep->WR.set(destinationIndex);
-				boardRep->BN.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='b'){
-				boardRep->WR.reset(startIndex);
-				boardRep->WR.set(destinationIndex);
-				boardRep->BB.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='q'){
-				boardRep->WR.reset(startIndex);
-				boardRep->WR.set(destinationIndex);
-				boardRep->BQ.reset(destinationIndex);
-			}
-		}
-		if(boardRep->getPiece(startSquare)=='N')
-		{
-			if (boardRep->getPiece(destinationSquare)=='p'){
-				boardRep->WN.reset(startIndex);
-				boardRep->WN.set(destinationIndex);
-				boardRep->BP.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='r'){
-				boardRep->WN.reset(startIndex);
-				boardRep->WN.set(destinationIndex);
-				boardRep->BR.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='n'){
-				boardRep->WN.reset(startIndex);
-				boardRep->WN.set(destinationIndex);
-				boardRep->BN.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='b'){
-				boardRep->WN.reset(startIndex);
-				boardRep->WN.set(destinationIndex);
-				boardRep->BB.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='q'){
-				boardRep->WN.reset(startIndex);
-				boardRep->WN.set(destinationIndex);
-				boardRep->BQ.reset(destinationIndex);
-			}
-		}
-		if(boardRep->getPiece(startSquare)=='B')
-		{
-			if (boardRep->getPiece(destinationSquare)=='p'){
-				boardRep->WB.reset(startIndex);
-				boardRep->WB.set(destinationIndex);
-				boardRep->BP.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='r'){
-				boardRep->WB.reset(startIndex);
-				boardRep->WB.set(destinationIndex);
-				boardRep->BR.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='n'){
-				boardRep->WB.reset(startIndex);
-				boardRep->WB.set(destinationIndex);
-				boardRep->BN.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='b'){
-				boardRep->WB.reset(startIndex);
-				boardRep->WB.set(destinationIndex);
-				boardRep->BB.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='q'){
-				boardRep->WB.reset(startIndex);
-				boardRep->WB.set(destinationIndex);
-				boardRep->BQ.reset(destinationIndex);
-			}
-		}
-		if(boardRep->getPiece(startSquare)=='Q')
-		{
-			if (boardRep->getPiece(destinationSquare)=='p'){
-				boardRep->WQ.reset(startIndex);
-				boardRep->WQ.set(destinationIndex);
-				boardRep->BP.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='r'){
-				boardRep->WQ.reset(startIndex);
-				boardRep->WQ.set(destinationIndex);
-				boardRep->BR.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='n'){
-				boardRep->WQ.reset(startIndex);
-				boardRep->WQ.set(destinationIndex);
-				boardRep->BN.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='b'){
-				boardRep->WQ.reset(startIndex);
-				boardRep->WQ.set(destinationIndex);
-				boardRep->BB.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='q'){
-				boardRep->WQ.reset(startIndex);
-				boardRep->WQ.set(destinationIndex);
-				boardRep->BQ.reset(destinationIndex);
-			}
-		}
-		if(boardRep->getPiece(startSquare)=='K')
-		{
-			if (boardRep->getPiece(destinationSquare)=='p'){
-				boardRep->WK.reset(startIndex);
-				boardRep->WK.set(destinationIndex);
-				boardRep->BP.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='r'){
-				boardRep->WK.reset(startIndex);
-				boardRep->WK.set(destinationIndex);
-				boardRep->BR.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='n'){
-				boardRep->WK.reset(startIndex);
-				boardRep->WK.set(destinationIndex);
-				boardRep->BN.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='b'){
-				boardRep->WK.reset(startIndex);
-				boardRep->WK.set(destinationIndex);
-				boardRep->BB.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='q'){
-				boardRep->WK.reset(startIndex);
-				boardRep->WK.set(destinationIndex);
-				boardRep->BQ.reset(destinationIndex);
-			}
-		}
-		if(boardRep->getPiece(startSquare)=='p')
-		{
-			if (boardRep->getPiece(destinationSquare)=='P'){
-				boardRep->BP.reset(startIndex);
-
-				if (special=="ep"){
-					boardRep->BP.set(destinationIndex);
-					boardRep->WP.reset(destinationIndex+8);
-				}else{
-					boardRep->BP.set(destinationIndex);
-					boardRep->WP.reset(destinationIndex);
-				}
-			}
-			if (boardRep->getPiece(destinationSquare)=='R'){
-				boardRep->BP.reset(startIndex);
-				if (special=="=q") {boardRep->BQ.set(destinationIndex);boardRep->WR.reset(destinationIndex);}
-				else if (special=="=r") {boardRep->BR.set(destinationIndex);boardRep->WR.reset(destinationIndex);}
-				else if (special=="=b") {boardRep->BB.set(destinationIndex);boardRep->WR.reset(destinationIndex);}
-				else if (special=="=n") {boardRep->BN.set(destinationIndex);boardRep->WR.reset(destinationIndex);}
-				else {boardRep->BP.set(destinationIndex);boardRep->WR.reset(destinationIndex);}
-			}
-			if (boardRep->getPiece(destinationSquare)=='N'){
-				boardRep->BP.reset(startIndex);
-				if (special=="=q") {boardRep->BQ.set(destinationIndex);boardRep->WN.reset(destinationIndex);}
-				else if (special=="=r") {boardRep->BR.set(destinationIndex);boardRep->WN.reset(destinationIndex);}
-				else if (special=="=b") {boardRep->BB.set(destinationIndex);boardRep->WN.reset(destinationIndex);}
-				else if (special=="=n") {boardRep->BN.set(destinationIndex);boardRep->WN.reset(destinationIndex);}
-				else {boardRep->BP.set(destinationIndex);boardRep->WN.reset(destinationIndex);}
-			}
-			if (boardRep->getPiece(destinationSquare)=='B'){
-				boardRep->BP.reset(startIndex);
-				if (special=="=q") {boardRep->BQ.set(destinationIndex);boardRep->WB.reset(destinationIndex);}
-				else if (special=="=r") {boardRep->BR.set(destinationIndex);boardRep->WB.reset(destinationIndex);}
-				else if (special=="=b") {boardRep->BB.set(destinationIndex);boardRep->WB.reset(destinationIndex);}
-				else if (special=="=n") {boardRep->BN.set(destinationIndex);boardRep->WB.reset(destinationIndex);}
-				else {boardRep->BP.set(destinationIndex);boardRep->WB.reset(destinationIndex);}
-			}
-			if (boardRep->getPiece(destinationSquare)=='Q'){
-				boardRep->BP.reset(startIndex);
-				if (special=="=q") {boardRep->BQ.set(destinationIndex);boardRep->WQ.reset(destinationIndex);}
-				else if (special=="=r") {boardRep->BR.set(destinationIndex);boardRep->WQ.reset(destinationIndex);}
-				else if (special=="=b") {boardRep->BB.set(destinationIndex);boardRep->WQ.reset(destinationIndex);}
-				else if (special=="=n") {boardRep->BN.set(destinationIndex);boardRep->WQ.reset(destinationIndex);}
-				else {boardRep->BP.set(destinationIndex);boardRep->WQ.reset(destinationIndex);}
-			}
-		}
-		if(boardRep->getPiece(startSquare)=='r')
-		{
-			if (boardRep->getPiece(destinationSquare)=='P'){
-				boardRep->BR.reset(startIndex);
-				boardRep->BR.set(destinationIndex);
-				boardRep->WP.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='R'){
-				boardRep->BR.reset(startIndex);
-				boardRep->BR.set(destinationIndex);
-				boardRep->WR.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='N'){
-				boardRep->BR.reset(startIndex);
-				boardRep->BR.set(destinationIndex);
-				boardRep->WN.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='B'){
-				boardRep->BR.reset(startIndex);
-				boardRep->BR.set(destinationIndex);
-				boardRep->WB.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='Q'){
-				boardRep->BR.reset(startIndex);
-				boardRep->BR.set(destinationIndex);
-				boardRep->WQ.reset(destinationIndex);
-			}
-		}
-		if(boardRep->getPiece(startSquare)=='n')
-		{
-			if (boardRep->getPiece(destinationSquare)=='P'){
-				boardRep->BN.reset(startIndex);
-				boardRep->BN.set(destinationIndex);
-				boardRep->WP.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='R'){
-				boardRep->BN.reset(startIndex);
-				boardRep->BN.set(destinationIndex);
-				boardRep->WR.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='N'){
-				boardRep->BN.reset(startIndex);
-				boardRep->BN.set(destinationIndex);
-				boardRep->WN.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='B'){
-				boardRep->BN.reset(startIndex);
-				boardRep->BN.set(destinationIndex);
-				boardRep->WB.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='Q'){
-				boardRep->BN.reset(startIndex);
-				boardRep->BN.set(destinationIndex);
-				boardRep->WQ.reset(destinationIndex);
-			}
-		}
-		if(boardRep->getPiece(startSquare)=='b')
-		{
-			if (boardRep->getPiece(destinationSquare)=='P'){
-				boardRep->BB.reset(startIndex);
-				boardRep->BB.set(destinationIndex);
-				boardRep->WP.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='R'){
-				boardRep->BB.reset(startIndex);
-				boardRep->BB.set(destinationIndex);
-				boardRep->WR.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='N'){
-				boardRep->BB.reset(startIndex);
-				boardRep->BB.set(destinationIndex);
-				boardRep->WN.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='B'){
-				boardRep->BB.reset(startIndex);
-				boardRep->BB.set(destinationIndex);
-				boardRep->WB.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='Q'){
-				boardRep->BB.reset(startIndex);
-				boardRep->BB.set(destinationIndex);
-				boardRep->WQ.reset(destinationIndex);
-			}
-		}
-		if(boardRep->getPiece(startSquare)=='q')
-		{
-			if (boardRep->getPiece(destinationSquare)=='P'){
-				boardRep->BQ.reset(startIndex);
-				boardRep->BQ.set(destinationIndex);
-				boardRep->WP.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='R'){
-				boardRep->BQ.reset(startIndex);
-				boardRep->BQ.set(destinationIndex);
-				boardRep->WR.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='N'){
-				boardRep->BQ.reset(startIndex);
-				boardRep->BQ.set(destinationIndex);
-				boardRep->WN.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='B'){
-				boardRep->BQ.reset(startIndex);
-				boardRep->BQ.set(destinationIndex);
-				boardRep->WB.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='Q'){
-				boardRep->BQ.reset(startIndex);
-				boardRep->BQ.set(destinationIndex);
-				boardRep->WQ.reset(destinationIndex);
-			}
-		}
-		if(boardRep->getPiece(startSquare)=='k')
-		{
-			if (boardRep->getPiece(destinationSquare)=='P'){
-				boardRep->BK.reset(startIndex);
-				boardRep->BK.set(destinationIndex);
-				boardRep->WP.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='R'){
-				boardRep->BK.reset(startIndex);
-				boardRep->BK.set(destinationIndex);
-				boardRep->WR.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='N'){
-				boardRep->BK.reset(startIndex);
-				boardRep->BK.set(destinationIndex);
-				boardRep->WN.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='B'){
-				boardRep->BK.reset(startIndex);
-				boardRep->BK.set(destinationIndex);
-				boardRep->WB.reset(destinationIndex);
-			}
-			if (boardRep->getPiece(destinationSquare)=='Q'){
-				boardRep->BK.reset(startIndex);
-				boardRep->BK.set(destinationIndex);
-				boardRep->WQ.reset(destinationIndex);
-			}
-		}
-	}
-
-	
-	boardRep->updateBoard();
-	boardRep->updateGenPositions();
-}
-
 bool Moves::WKCheck(){
 	bitset<64> unsafe(unsafeForWhite());
-	bitset<64> check=boardRep->WK & unsafe;
+	bitset<64> check=WK & unsafe;
 	if (check.to_ulong()!=0){
 		return true;
 	}
@@ -1444,16 +1073,18 @@ bool Moves::WKCheck(){
 
 bool Moves::BKCheck(){
 	bitset<64> unsafe(unsafeForBlack());
-	bitset<64> check=boardRep->BK & unsafe;
+	bitset<64> check=BK & unsafe;
 	if (check.to_ulong()!=0){
 		return true;
 	}
 	return false;
 }
 
+
 int main(){
 	Moves moveSet;
-	// bitset<64> n(6327421892U);
+	bitset<64> n(6327421892U);
+
 	// cout<<n<<endl;
 	// bitset<64> reverser(reverseBits((uint64_t)n.to_ulong()));			//THIS IS THE SYNTAX FOR REVERSING 64 BIT BITSET
 	// cout<<reverser<<endl;
@@ -1464,8 +1095,8 @@ int main(){
 	// bitset<64> temp;
 	
 
-	// cout<<"MSB INDEX: "<<bitScanReverse((uint64_t)boardRep->WK.to_ulong())<<endl;
-	// cout<<"LSB INDEX: "<<bitScanForward((uint64_t)boardRep->WP.to_ulong())<<endl;
+	// cout<<"MSB INDEX: "<<bitScanReverse((uint64_t)WK.to_ulong())<<endl;
+	// cout<<"LSB INDEX: "<<bitScanForward((uint64_t)WP.to_ulong())<<endl;
 
 	// bitset<64> temp(moveSet.possibleBK());
 
@@ -1473,18 +1104,87 @@ int main(){
 	// 	cout<<temp[i];
 	// 	if (i%8==0)cout<<endl;
 	// }
-	vector<string> whiteMoves = moveSet.possibleWMoves("e4-e6");
+	char gameboard[64];
+	for (int i=0;i<64;i++){
+		gameboard[i]='*';
+	}
+	
+	
+	gameboard[0]='R';
+	gameboard[1]='N';
+	gameboard[2]='B';
+	gameboard[3]='Q';
+	gameboard[4]='K';
+	gameboard[5]='B';
+	gameboard[6]='N';
+	gameboard[7]='R';
+	for (int i=8;i<16;i++){
+		gameboard[i]='P';
+	}
+
+
+	for (int i=48;i<56;i++){
+		gameboard[i]='p';
+	}
+	gameboard[56]='r';
+	gameboard[57]='n';
+	gameboard[58]='b';
+	gameboard[59]='q';
+	gameboard[60]='k';
+	gameboard[61]='b';
+	gameboard[62]='n';
+	gameboard[63]='r';
+	// gameboard[18]='N';
+	// gameboard[21]='P';
+	// gameboard[24]='P';
+	// gameboard[25]='K';
+	// gameboard[27]='Q';
+	// gameboard[29]='p';
+	// gameboard[34]='P';
+	// gameboard[35]='P';
+	// gameboard[40]='b';
+	// gameboard[41]='p';
+	// gameboard[44]='R';
+	// gameboard[50]='p';
+	// gameboard[57]='k';
+	// gameboard[59]='r';
+	// gameboard[62]='q';
+
+	cout<<endl;
+	for (int i=63;i>=0;i--){
+		cout<<gameboard[i];
+		if (i%8==0)cout<<endl;
+	}
+	cout<<endl;
+
+	// for (int i=0;i<64;i++){
+	// 	if (i%8==0)cout<<endl;
+
+	// 	cout<<gameboard[i];
+	// }
+	// cout<<endl;
+
+	bitset<64> EP;
+	bitset<64> WP;
+	bitset<64> BP;
+
+
+	vector<string> whiteMoves = moveSet.possibleBMoves(EP, gameboard);
 	for (int i=0;i<(int)whiteMoves.size();i++){
 		cout<<whiteMoves[i]<<endl;
 	}
 
-	moveSet.boardRep->drawBoard();
-	moveSet.makeMove("e2-e4");
-	moveSet.boardRep->drawBoard();
-	moveSet.makeMove("h7-h5");
-	moveSet.boardRep->drawBoard();
-	moveSet.makeMove("g1-f3");
-	moveSet.boardRep->drawBoard();
+
+	// string list = moveSet.possibleBPEP(EP,BP);
+	// cout<<list<<endl;
+
+	// moveSet.boardRep->drawBoard();
+	// moveSet.makeMove("g1-h3");
+	// moveSet.boardRep->drawBoard();
+	// moveSet.makeMove("h7-h5");
+	// moveSet.boardRep->drawBoard();
+	// moveSet.makeMove("g1-f3");
+	// moveSet.boardRep->drawBoard();
 
 	// if (moveSet.WKCheck()){
 	// 	cout<<"CHECK!"<<endl;
