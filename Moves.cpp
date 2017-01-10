@@ -692,28 +692,28 @@ uint64_t Moves::DandAntiMoves(int arrayPos){
 
 }
 
-string Moves::possibleCW(bool CWK, bool CWQ){
-	string list = "";
-	if (CWK){
-		list+="O-Ow ";
-	}
-	if (CWQ){
-		list+="O-O-Ow ";
-	}
-	return list;
+// string Moves::possibleCW(bool CWK, bool CWQ){
+// 	string list = "";
+// 	if (CWK){
+// 		list+="O-Ow ";
+// 	}
+// 	if (CWQ){
+// 		list+="O-O-Ow ";
+// 	}
+// 	return list;
 
-}
-string Moves::possibleCB(bool CBK, bool CBQ){
-	string list = "";
-	if (CWK){
-		list+="O-Ob ";
-	}
-	if (CWQ){
-		list+="O-O-Ob ";
-	}
-	return list;
+// }
+// string Moves::possibleCB(bool CBK, bool CBQ){
+// 	string list = "";
+// 	if (CWK){
+// 		list+="O-Ob ";
+// 	}
+// 	if (CWQ){
+// 		list+="O-O-Ob ";
+// 	}
+// 	return list;
 
-}
+// }
 
 vector<string> Moves::possibleWMoves(char* board){
 	string list;
@@ -780,7 +780,7 @@ vector<string> Moves::possibleWMoves(char* board){
 
 }
 
-vector<string> Moves::possibleBMoves(bitset<64> EP, char* board){
+vector<string> Moves::possibleBMoves(char* board){
 	string list;
 	string move;
 	vector<string> move_list;
@@ -1081,125 +1081,125 @@ bool Moves::BKCheck(){
 }
 
 
-int main(){
-	Moves moveSet;
-	bitset<64> n(6327421892U);
+// int main(){
+// 	Moves moveSet;
+// 	bitset<64> n(6327421892U);
 
-	// cout<<n<<endl;
-	// bitset<64> reverser(reverseBits((uint64_t)n.to_ulong()));			//THIS IS THE SYNTAX FOR REVERSING 64 BIT BITSET
-	// cout<<reverser<<endl;
-	// bitset<64> rookMoves=moveSet.HandVMoves(45);
-	// bitset<64> bishopMoves=moveSet.DandAntiMoves(2);
+// 	// cout<<n<<endl;
+// 	// bitset<64> reverser(reverseBits((uint64_t)n.to_ulong()));			//THIS IS THE SYNTAX FOR REVERSING 64 BIT BITSET
+// 	// cout<<reverser<<endl;
+// 	// bitset<64> rookMoves=moveSet.HandVMoves(45);
+// 	// bitset<64> bishopMoves=moveSet.DandAntiMoves(2);
 
-	// bitset<64> diagnolTemp=moveSet.adiagnols[4];
-	// bitset<64> temp;
+// 	// bitset<64> diagnolTemp=moveSet.adiagnols[4];
+// 	// bitset<64> temp;
 	
 
-	// cout<<"MSB INDEX: "<<bitScanReverse((uint64_t)WK.to_ulong())<<endl;
-	// cout<<"LSB INDEX: "<<bitScanForward((uint64_t)WP.to_ulong())<<endl;
+// 	// cout<<"MSB INDEX: "<<bitScanReverse((uint64_t)WK.to_ulong())<<endl;
+// 	// cout<<"LSB INDEX: "<<bitScanForward((uint64_t)WP.to_ulong())<<endl;
 
-	// bitset<64> temp(moveSet.possibleBK());
+// 	// bitset<64> temp(moveSet.possibleBK());
 
-	// 	for (int i=63;i>=0;i--){
-	// 	cout<<temp[i];
-	// 	if (i%8==0)cout<<endl;
-	// }
-	char gameboard[64];
-	for (int i=0;i<64;i++){
-		gameboard[i]='*';
-	}
+// 	// 	for (int i=63;i>=0;i--){
+// 	// 	cout<<temp[i];
+// 	// 	if (i%8==0)cout<<endl;
+// 	// }
+// 	char gameboard[64];
+// 	for (int i=0;i<64;i++){
+// 		gameboard[i]='*';
+// 	}
 	
 	
-	gameboard[0]='R';
-	gameboard[1]='N';
-	gameboard[2]='B';
-	gameboard[3]='Q';
-	gameboard[4]='K';
-	gameboard[5]='B';
-	gameboard[6]='N';
-	gameboard[7]='R';
-	for (int i=8;i<16;i++){
-		gameboard[i]='P';
-	}
+// 	gameboard[0]='R';
+// 	gameboard[1]='N';
+// 	gameboard[2]='B';
+// 	gameboard[3]='Q';
+// 	gameboard[4]='K';
+// 	gameboard[5]='B';
+// 	gameboard[6]='N';
+// 	gameboard[7]='R';
+// 	for (int i=8;i<16;i++){
+// 		gameboard[i]='P';
+// 	}
 
 
-	for (int i=48;i<56;i++){
-		gameboard[i]='p';
-	}
-	gameboard[56]='r';
-	gameboard[57]='n';
-	gameboard[58]='b';
-	gameboard[59]='q';
-	gameboard[60]='k';
-	gameboard[61]='b';
-	gameboard[62]='n';
-	gameboard[63]='r';
-	// gameboard[18]='N';
-	// gameboard[21]='P';
-	// gameboard[24]='P';
-	// gameboard[25]='K';
-	// gameboard[27]='Q';
-	// gameboard[29]='p';
-	// gameboard[34]='P';
-	// gameboard[35]='P';
-	// gameboard[40]='b';
-	// gameboard[41]='p';
-	// gameboard[44]='R';
-	// gameboard[50]='p';
-	// gameboard[57]='k';
-	// gameboard[59]='r';
-	// gameboard[62]='q';
+// 	for (int i=48;i<56;i++){
+// 		gameboard[i]='p';
+// 	}
+// 	gameboard[56]='r';
+// 	gameboard[57]='n';
+// 	gameboard[58]='b';
+// 	gameboard[59]='q';
+// 	gameboard[60]='k';
+// 	gameboard[61]='b';
+// 	gameboard[62]='n';
+// 	gameboard[63]='r';
+// 	// gameboard[18]='N';
+// 	// gameboard[21]='P';
+// 	// gameboard[24]='P';
+// 	// gameboard[25]='K';
+// 	// gameboard[27]='Q';
+// 	// gameboard[29]='p';
+// 	// gameboard[34]='P';
+// 	// gameboard[35]='P';
+// 	// gameboard[40]='b';
+// 	// gameboard[41]='p';
+// 	// gameboard[44]='R';
+// 	// gameboard[50]='p';
+// 	// gameboard[57]='k';
+// 	// gameboard[59]='r';
+// 	// gameboard[62]='q';
 
-	cout<<endl;
-	for (int i=63;i>=0;i--){
-		cout<<gameboard[i];
-		if (i%8==0)cout<<endl;
-	}
-	cout<<endl;
+// 	cout<<endl;
+// 	for (int i=63;i>=0;i--){
+// 		cout<<gameboard[i];
+// 		if (i%8==0)cout<<endl;
+// 	}
+// 	cout<<endl;
 
-	// for (int i=0;i<64;i++){
-	// 	if (i%8==0)cout<<endl;
+// 	// for (int i=0;i<64;i++){
+// 	// 	if (i%8==0)cout<<endl;
 
-	// 	cout<<gameboard[i];
-	// }
-	// cout<<endl;
+// 	// 	cout<<gameboard[i];
+// 	// }
+// 	// cout<<endl;
 
-	bitset<64> EP;
-	bitset<64> WP;
-	bitset<64> BP;
-
-
-	vector<string> whiteMoves = moveSet.possibleBMoves(EP, gameboard);
-	for (int i=0;i<(int)whiteMoves.size();i++){
-		cout<<whiteMoves[i]<<endl;
-	}
+// 	bitset<64> EP;
+// 	bitset<64> WP;
+// 	bitset<64> BP;
 
 
-	// string list = moveSet.possibleBPEP(EP,BP);
-	// cout<<list<<endl;
+// 	vector<string> whiteMoves = moveSet.possibleBMoves(EP, gameboard);
+// 	for (int i=0;i<(int)whiteMoves.size();i++){
+// 		cout<<whiteMoves[i]<<endl;
+// 	}
 
-	// moveSet.boardRep->drawBoard();
-	// moveSet.makeMove("g1-h3");
-	// moveSet.boardRep->drawBoard();
-	// moveSet.makeMove("h7-h5");
-	// moveSet.boardRep->drawBoard();
-	// moveSet.makeMove("g1-f3");
-	// moveSet.boardRep->drawBoard();
 
-	// if (moveSet.WKCheck()){
-	// 	cout<<"CHECK!"<<endl;
-	// }else{
-	// 	cout<<"NO CHECK!"<<endl;
-	// }
-	// moveSet.makeMove("b1-c3");
-	// moveSet.boardRep->drawBoard();
+// 	// string list = moveSet.possibleBPEP(EP,BP);
+// 	// cout<<list<<endl;
 
-	// bitset<64> temp = ~moveSet.fileA & ~moveSet.fileB;
+// 	// moveSet.boardRep->drawBoard();
+// 	// moveSet.makeMove("g1-h3");
+// 	// moveSet.boardRep->drawBoard();
+// 	// moveSet.makeMove("h7-h5");
+// 	// moveSet.boardRep->drawBoard();
+// 	// moveSet.makeMove("g1-f3");
+// 	// moveSet.boardRep->drawBoard();
 
-	// for (int i=63;i>=0;i--){
-	// 	cout<<temp[i];
-	// 	if (i%8==0)cout<<endl;
+// 	// if (moveSet.WKCheck()){
+// 	// 	cout<<"CHECK!"<<endl;
+// 	// }else{
+// 	// 	cout<<"NO CHECK!"<<endl;
+// 	// }
+// 	// moveSet.makeMove("b1-c3");
+// 	// moveSet.boardRep->drawBoard();
 
-	// }
+// 	// bitset<64> temp = ~moveSet.fileA & ~moveSet.fileB;
 
-}
+// 	// for (int i=63;i>=0;i--){
+// 	// 	cout<<temp[i];
+// 	// 	if (i%8==0)cout<<endl;
+
+// 	// }
+
+// }

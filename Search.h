@@ -5,9 +5,9 @@ class Search{
 	public:
 		Search();
 		~Search();
-		double negaMax(char* board);
-		void makeMove(char& board, string move);
-		void undoMove(char& board, string lastMove, char pieceTaken, bool white);
+		double negaMax(char* board, bool white, int depth, int a, int b);
+		void makeMove(char*& board, string move);
+		void undoMove(char*& board, string lastMove, char pieceTaken, bool white);
 		double staticEvaluate(char* board);
 		void makeBestMove(char* board, bool white, int plyDepth);
 

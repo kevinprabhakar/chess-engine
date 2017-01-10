@@ -2,6 +2,7 @@
 #include "Search.h"
 #include <float.h>
 #include <random>
+#include <iostream>
 
 using namespace std;
 
@@ -13,18 +14,19 @@ Search::~Search(){
 	delete moveSet;
 }
 
-double Search::negaMax(char* board, bool white, int depth){
-	double moveScore;
-	double bestMove = -DBL_MAX;
+int alpha=-32767;
+int beta=32767;
 
-	string bestMove;
+double Search::negaMax(char* board, bool white, int depth, int a, int b){
+	double moveScore;
+	double bestMoveScore = -DBL_MAX;
 
 	vector<string> moves;
 
 	if (white){
-		moves = moveSet.possibleWMoves(board);
+		moves = moveSet->possibleWMoves(board);
 	}else{
-		moves = moveSet.possibleBMoves(board);
+		moves = moveSet->possibleBMoves(board);
 	}
 
 	for (int i=0;i<(int)moves.size();i++){
@@ -34,31 +36,24 @@ double Search::negaMax(char* board, bool white, int depth){
 		if (depth==0){
 			moveScore = staticEvaluate(board);
 		}else{
-			moveScore = negaMax(board, !white, depth-1)*-1;
+			moveScore = negaMax(board, !white, depth-1,-b,-a)*-1;
 		}
-		unmakeMove(board, moves[i], pieceTaken, white);
+		undoMove(board, moves[i], pieceTaken, white);
 
-		if (moveScore > bestMoveScore){
-			bestMoveScore = moveScore;
-			bestMove = move;
-		}
+		if (moveScore > bestMoveScore)bestMoveScore = moveScore;
+		if (bestMoveScore > alpha) alpha=bestMoveScore;
+		if (alpha>=beta) return alpha;
+
+
 	}
-
-	cout<<"BEST MOVE FOR ";
-
-	if (white) cout<<"WHITE: ";
-	else cout<<"BLACK: ";
-
-	cout<<bestMove;
-
 	return bestMoveScore;
 }
 
-void Search::makeMove(char& board, string move){
+void Search::makeMove(char*& board, string move){
 	int startIndex;
 	int destinationIndex;
-	string startSquare=(*it2).substr(0,2);
-	string destinationSquare=(*it2).substr(3,2);
+	string startSquare=(move).substr(0,2);
+	string destinationSquare=(move).substr(3,2);
 
 	if (move.size()==5){
 		startIndex = moveSet->notationMap[move.substr(0,2)];
@@ -71,14 +66,14 @@ void Search::makeMove(char& board, string move){
 	if (move.size()==7){
 		startIndex = moveSet->notationMap[move.substr(0,2)];
 		destinationIndex = moveSet->notationMap[move.substr(3,2)];
-		char endPiece = move.substr(6,1);
+		char endPiece = move[6];
 
 		board[startIndex]='*';
 		board[destinationIndex]=endPiece;
 	}
 }
 
-void Search::undoMove(char& board, string lastMove, char pieceTaken, bool white){
+void Search::undoMove(char*& board, string lastMove, char pieceTaken, bool white){
 	if (lastMove.size()==5){
 		int startIndex = moveSet->notationMap[lastMove.substr(0,2)];
 		int destinationIndex = moveSet->notationMap[lastMove.substr(3,2)];
@@ -88,8 +83,8 @@ void Search::undoMove(char& board, string lastMove, char pieceTaken, bool white)
 		board[startIndex]=currentPiece;
 	}
 	if (lastMove.size()==7){
-		startIndex = moveSet->notationMap[lastMove.substr(0,2)];
-		destinationIndex = moveSet->notationMap[lastMove.substr(3,2)];
+		int startIndex = moveSet->notationMap[lastMove.substr(0,2)];
+		int destinationIndex = moveSet->notationMap[lastMove.substr(3,2)];
 
 		board[destinationIndex]=pieceTaken;
 
@@ -112,21 +107,21 @@ void Search::makeBestMove(char* board, bool white, int plyDepth){
 	vector<string> moves;
 	string bestMove;
 	int moveScore;
-	int bestMoveScore=-DBL_MAX;
+	double bestMoveScore=-DBL_MAX;
 
 	if (white){
-		moves = moveSet.possibleWMoves(board);
+		moves = moveSet->possibleWMoves(board);
 	}else{
-		moves = moveSet.possibleBMoves(board);
+		moves = moveSet->possibleBMoves(board);
 	}
 
 	for (int i=0;i<(int)moves.size();i++){
 		makeMove(board, moves[i]);
 		char pieceTaken = board[moveSet->notationMap[moves[i].substr(3,2)]];
 
-		moveScore=negaMax(board);
+		moveScore=negaMax(board,white,plyDepth, alpha, beta);
 
-		unmakeMove(board, moves[i], pieceTaken, white);
+		undoMove(board, moves[i], pieceTaken, white);
 
 		if (moveScore > bestMoveScore){
 			bestMoveScore = moveScore;
@@ -140,7 +135,7 @@ void Search::makeBestMove(char* board, bool white, int plyDepth){
 }
 
 int main(){
-	SearcH whoopie;
+	Search temp;
 
 
 	char gameboard[64];
@@ -174,5 +169,12 @@ int main(){
 	gameboard[62]='n';
 	gameboard[63]='r';
 
-	whoopie.makeBestMove(gameboard,true,1);
+	cout<<endl;
+	for (int i=63;i>=0;i--){
+		cout<<gameboard[i];
+		if (i%8==0)cout<<endl;
+	}
+	cout<<endl;
+
+	temp.makeBestMove(gameboard,true,1);
 }

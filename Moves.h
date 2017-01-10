@@ -66,8 +66,7 @@ class Moves{
 		string possibleCB(bool CBK, bool CBQ);
 
 
-		uint64_t unsafeForWhite();
-		uint64_t unsafeForBlack();
+		
 		uint64_t HandVMoves(int arrayPos);
 		uint64_t DandAntiMoves(int arrayPos);
 		void updateGenPositions();
@@ -86,6 +85,8 @@ class Moves{
 		void makeMove(string move);
 		map<string, int> notationMap;
 		map<int, string> positionMap;
+		uint64_t unsafeForWhite();
+		uint64_t unsafeForBlack();
 
 
 
